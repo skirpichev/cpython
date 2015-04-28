@@ -165,6 +165,20 @@ class TestBugs(unittest.TestCase):
             self.assertRaises(ValueError, L.sort, key=cmp_to_key(mutating_cmp))
             memorywaster = [memorywaster]
 
+    def test_bug24075(self):
+        # sort() should do quick exit if len(list) <= 1
+
+        L = [1]
+        def spam(x):
+            raise Exception
+        try:
+            L.sort(key=spam)
+            raised = False
+        except Exception:
+            raised = True
+
+        self.assertFalse(raised)
+
 #==============================================================================
 
 class TestDecorateSortUndecorate(unittest.TestCase):

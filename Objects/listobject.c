@@ -2228,6 +2228,9 @@ list_sort_impl(PyListObject *self, PyObject *keyfunc, int reverse)
     if (keyfunc == Py_None)
         keyfunc = NULL;
 
+    if (Py_SIZE(self) <= 1)
+        Py_RETURN_NONE;
+
     /* The list is temporarily made empty, so that mutations performed
      * by comparison functions can't affect the slice of memory we're
      * sorting (allowing mutations during sorting is a core-dump
