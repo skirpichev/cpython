@@ -727,6 +727,20 @@ class StructTest(ComplexesAreIdenticalMixin, unittest.TestCase):
                 with self.assertRaises(TypeError):
                     cls.x = 1
 
+    @support.cpython_only
+    def test__struct_Struct__new__initialized(self):
+        # See https://github.com/python/cpython/issues/78724
+
+        s = struct.Struct.__new__(struct.Struct, "b")
+        s.unpack_from(b"abcd")
+
+    @support.cpython_only
+    def test__struct_Struct_subclassing(self):
+        class Bob(struct.Struct):
+            pass
+
+        s = Bob("b")
+        s.unpack_from(b"abcd")
 
     def test_issue35714(self):
         # Embedded null characters should not be allowed in format strings.
@@ -787,15 +801,6 @@ class StructTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         test_error_propagation('N')
         test_error_propagation('n')
 
-    def test_struct_subclass_instantiation(self):
-        # Regression test for https://github.com/python/cpython/issues/112358
-        class MyStruct(struct.Struct):
-            def __init__(self):
-                super().__init__('>h')
-
-        my_struct = MyStruct()
-        self.assertEqual(my_struct.pack(12345), b'\x30\x39')
-
     def test_repr(self):
         s = struct.Struct('=i2H')
         self.assertEqual(repr(s), f'Struct({s.format!r})')
@@ -825,18 +830,6 @@ class StructTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         with InterpreterPoolExecutor(max_workers=5) as executor:
             results = executor.map(exec, [code] * 5)
             self.assertListEqual(list(results), [None] * 5)
-
-    def test_operations_on_half_initialized_Struct(self):
-        S = struct.Struct.__new__(struct.Struct)
-
-        spam = array.array('b', b' ')
-        self.assertRaises(RuntimeError, S.iter_unpack, spam)
-        self.assertRaises(RuntimeError, S.pack, 1)
-        self.assertRaises(RuntimeError, S.pack_into, spam, 1)
-        self.assertRaises(RuntimeError, S.unpack, spam)
-        self.assertRaises(RuntimeError, S.unpack_from, spam)
-        self.assertRaises(RuntimeError, getattr, S, 'format')
-        self.assertEqual(S.size, -1)
 
 
 class UnpackIteratorTest(unittest.TestCase):

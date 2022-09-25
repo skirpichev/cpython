@@ -1765,28 +1765,9 @@ prepare_s(PyStructObject *self)
     return -1;
 }
 
-static PyObject *
-s_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-    PyObject *self;
-
-    assert(type != NULL);
-    allocfunc alloc_func = PyType_GetSlot(type, Py_tp_alloc);
-    assert(alloc_func != NULL);
-
-    self = alloc_func(type, 0);
-    if (self != NULL) {
-        PyStructObject *s = (PyStructObject*)self;
-        s->s_format = Py_NewRef(Py_None);
-        s->s_codes = NULL;
-        s->s_size = -1;
-        s->s_len = -1;
-    }
-    return self;
-}
-
 /*[clinic input]
-Struct.__init__
+@classmethod
+Struct.__new__
 
     format: object
 
@@ -1796,16 +1777,24 @@ Return a new Struct object which writes and reads binary data according
 to the format string.  See help(struct) for more on format strings.
 [clinic start generated code]*/
 
-static int
-Struct___init___impl(PyStructObject *self, PyObject *format)
-/*[clinic end generated code: output=b8e80862444e92d0 input=1af78a5f57d82cec]*/
+static PyObject *
+Struct_impl(PyTypeObject *type, PyObject *format)
+/*[clinic end generated code: output=49468b044e334308 input=a6c56771b340cf22]*/
 {
-    int ret = 0;
+    allocfunc alloc = PyType_GetSlot(type, Py_tp_alloc);
+    assert(alloc != NULL);
+    PyStructObject *self = (PyStructObject *)alloc(type, 0);
+
+    if (self == NULL) {
+        return NULL;
+    }
 
     if (PyUnicode_Check(format)) {
         format = PyUnicode_AsASCIIString(format);
-        if (format == NULL)
-            return -1;
+        if (format == NULL) {
+            Py_DECREF(self);
+            return NULL;
+        }
     }
     else {
         Py_INCREF(format);
@@ -1813,18 +1802,23 @@ Struct___init___impl(PyStructObject *self, PyObject *format)
 
     if (!PyBytes_Check(format)) {
         Py_DECREF(format);
+        Py_DECREF(self);
         PyErr_Format(PyExc_TypeError,
                      "Struct() argument 1 must be a str or bytes object, "
                      "not %.200s",
                      _PyType_Name(Py_TYPE(format)));
-        return -1;
+        return NULL;
     }
 
-    Py_SETREF(self->s_format, format);
+    self->s_format = format;
 
-    ret = prepare_s(self);
-    return ret;
+    if (prepare_s(self) < 0) {
+        Py_DECREF(self);
+        return NULL;
+    }
+    return (PyObject *)self;
 }
+
 
 static int
 s_clear(PyObject *op)
@@ -2431,15 +2425,14 @@ static PyType_Slot PyStructType_slots[] = {
     {Py_tp_getattro, PyObject_GenericGetAttr},
     {Py_tp_setattro, PyObject_GenericSetAttr},
     {Py_tp_repr, s_repr},
-    {Py_tp_doc, (void*)Struct___init____doc__},
+    {Py_tp_doc, (void*)Struct__doc__},
     {Py_tp_traverse, s_traverse},
     {Py_tp_clear, s_clear},
     {Py_tp_methods, s_methods},
     {Py_tp_members, s_members},
     {Py_tp_getset, s_getsetlist},
-    {Py_tp_init, Struct___init__},
+    {Py_tp_new, Struct},
     {Py_tp_alloc, PyType_GenericAlloc},
-    {Py_tp_new, s_new},
     {Py_tp_free, PyObject_GC_Del},
     {0, 0},
 };
