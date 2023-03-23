@@ -972,8 +972,7 @@ math_1(PyObject *arg, double (*func) (double), int can_overflow,
             PyErr_SetString(PyExc_OverflowError,
                             "math range error"); /* overflow */
         else
-            PyErr_SetString(PyExc_ValueError,
-                            "math domain error"); /* singularity */
+            PyErr_Format(PyExc_ValueError, err_msg, arg); /* singularity */
         return NULL;
     }
     if (Py_IS_FINITE(r) && errno && is_error(r))
