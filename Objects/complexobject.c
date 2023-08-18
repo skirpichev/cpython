@@ -348,7 +348,7 @@ PyComplex_AsCComplex(PyObject *op)
 }
 
 static PyObject *
-complex_repr(PyComplexObject *v)
+_complex_reprstr_impl(PyComplexObject *v, int isrepr)
 {
     int precision = 0;
     char format_code = 'r';
@@ -375,11 +375,20 @@ complex_repr(PyComplexObject *v)
             PyErr_NoMemory();
             goto done;
         }
+
+        if (isrepr && !v->cval.imag && copysign(1.0, v->cval.imag) == -1.0) {
+            result = PyUnicode_FromFormat("complex(0,-0.0)");
+            goto done;
+        }
     } else {
         /* Format imaginary part with sign, real part without. Include
            parens in the result. */
-        pre = PyOS_double_to_string(v->cval.real, format_code,
-                                    precision, 0, NULL);
+        if (isrepr && !v->cval.real) {
+            pre = PyOS_double_to_string(v->cval.real, 'f', 1, 0, NULL);
+        } else {
+            pre = PyOS_double_to_string(v->cval.real, format_code,
+                                        precision, 0, NULL);
+        }
         if (!pre) {
             PyErr_NoMemory();
             goto done;
@@ -392,6 +401,12 @@ complex_repr(PyComplexObject *v)
             PyErr_NoMemory();
             goto done;
         }
+
+        if (isrepr && !v->cval.imag && copysign(1.0, v->cval.imag) == -1.0) {
+            result = PyUnicode_FromFormat("complex(%s,-0.0)", re);
+            goto done;
+        }
+
         lead = "(";
         tail = ")";
     }
@@ -401,6 +416,18 @@ complex_repr(PyComplexObject *v)
     PyMem_Free(pre);
 
     return result;
+}
+
+static PyObject *
+complex_repr(PyComplexObject *v)
+{
+    return _complex_reprstr_impl(v, 1);
+}
+
+static PyObject *
+complex_str(PyComplexObject *v)
+{
+    return _complex_reprstr_impl(v, 0);
 }
 
 static Py_hash_t
@@ -1084,7 +1111,7 @@ PyTypeObject PyComplex_Type = {
     0,                                          /* tp_as_mapping */
     (hashfunc)complex_hash,                     /* tp_hash */
     0,                                          /* tp_call */
-    0,                                          /* tp_str */
+    (reprfunc)complex_str,                      /* tp_str */
     PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */

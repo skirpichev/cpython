@@ -588,19 +588,21 @@ class ComplexTest(unittest.TestCase):
 
     @support.requires_IEEE_754
     def test_negative_zero_repr_str(self):
-        def test(v, expected, test_fn=self.assertEqual):
-            test_fn(repr(v), expected)
-            test_fn(str(v), expected)
+        def test(v, expected_repr, expected_str=None, test_fn=self.assertEqual):
+            if expected_str is None:
+                expected_str = expected_repr
+            test_fn(repr(v), expected_repr)
+            test_fn(str(v), expected_str)
 
         test(complex(0., 1.),   "1j")
-        test(complex(-0., 1.),  "(-0+1j)")
+        test(complex(-0., 1.),  "(-0.0+1j)", "(-0+1j)")
         test(complex(0., -1.),  "-1j")
-        test(complex(-0., -1.), "(-0-1j)")
+        test(complex(-0., -1.), "(-0.0-1j)", "(-0-1j)")
 
         test(complex(0., 0.),   "0j")
-        test(complex(0., -0.),  "-0j")
-        test(complex(-0., 0.),  "(-0+0j)")
-        test(complex(-0., -0.), "(-0-0j)")
+        test(complex(0., -0.),  "complex(0,-0.0)", "-0j")
+        test(complex(-0., 0.),  "(-0.0+0j)", "(-0+0j)")
+        test(complex(-0., -0.), "complex(-0.0,-0.0)", "(-0-0j)")
 
     def test_neg(self):
         self.assertEqual(-(1+6j), -1-6j)
@@ -647,12 +649,12 @@ class ComplexTest(unittest.TestCase):
         vals = [0.0, 1e-500, 1e-315, 1e-200, 0.0123, 3.1415, 1e50, INF, NAN]
         vals += [-v for v in vals]
 
-        # complex(repr(z)) should recover z exactly, even for complex
+        # complex(str(z)) should recover z exactly, even for complex
         # numbers involving an infinity, nan, or negative zero
         for x in vals:
             for y in vals:
                 z = complex(x, y)
-                roundtrip = complex(repr(z))
+                roundtrip = complex(str(z))
                 self.assertFloatsAreIdentical(z.real, roundtrip.real)
                 self.assertFloatsAreIdentical(z.imag, roundtrip.imag)
 
