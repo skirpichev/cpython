@@ -727,3 +727,19 @@ if 0:
             for w in chain(range(1, 100_000),
                            (10**i for i in range(5, 30))):
                 consumer(w, limit, need_hi)
+
+
+def k_mul(x, y):
+    n = max(x.bit_length(), y.bit_length()) // 2
+    x0 = x >> n
+    x -= x0 << n
+    if x == y:
+        y0 = x0
+        y = x
+    else:
+        y0 = y >> n
+        y -= y0 << n
+    s1 = x0 * y0
+    s2 = x * y
+    s3 = (x0 + x) * (y0 + y) - s1 - s2
+    return (s1 << (n << 1)) + (s3 << n) + s2
