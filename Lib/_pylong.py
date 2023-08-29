@@ -290,7 +290,7 @@ def k_mul(x, y):
     if x == y:
         n //= 2
         x0 = x >> n
-        x  -= x0 << n
+        x -= x0 << n
         s1 = x0**2
         s2 = x**2
         s3 = (x0 + x)**2 - s1 - s2
@@ -298,7 +298,7 @@ def k_mul(x, y):
     else:
         n = max(n, y.bit_length()) // 2
         x0 = x >> n
-        x  -= x0 << n
+        x -= x0 << n
         y0 = y >> n
         y -= y0 << n
         s1 = x0 * y0
