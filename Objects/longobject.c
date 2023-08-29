@@ -3572,43 +3572,45 @@ _PyLong_Multiply(PyLongObject *a, PyLongObject *b)
         return _PyLong_FromSTwoDigits(v);
     }
 
-    PyObject *z;
     Py_ssize_t asize = _PyLong_DigitCount(a);
     Py_ssize_t bsize = _PyLong_DigitCount(b);
+    Py_ssize_t cutoff = a == b ? KARATSUBA_SQUARE_CUTOFF : KARATSUBA_CUTOFF;
 
     asize = asize > bsize ? bsize : asize;
 
     /* Use gradeschool math when either number is too small. */
-    if (asize <= KARATSUBA_CUTOFF) {
+    if (asize <= cutoff) {
         if (asize == 0) {
             return PyLong_FromLong(0);
         }
-        z = (PyObject*)x_mul(a, b);
+        PyObject *z = (PyObject*)x_mul(a, b);
+
+        /* Negate if exactly one of the inputs is negative. */
+        if (!_PyLong_SameSign(a, b) && z) {
+            _PyLong_Negate((PyLongObject**)&z);
+            if (z == NULL) {
+                return NULL;
+            }
+        }
+        return z;
     }
     else {
         PyObject *mod = PyImport_ImportModule("_pylong");
         if (mod == NULL) {
             return NULL;
         }
-        z = PyObject_CallMethod(mod, "karatsuba_mul", "OO", a, b);
+        PyObject *z = PyObject_CallMethod(mod, "k_mul", "OO", a, b);
         Py_DECREF(mod);
         if (z == NULL) {
             return NULL;
         }
         if (!PyLong_CheckExact(z)) {
             PyErr_SetString(PyExc_TypeError,
-                            "_pylong.karatsuba_mul did not return an int");
+                            "_pylong.k_mul did not return an int");
             return NULL;
         }
+        return z;
     }
-
-    /* Negate if exactly one of the inputs is negative. */
-    if (!_PyLong_SameSign(a, b) && z) {
-        _PyLong_Negate((PyLongObject**)&z);
-        if (z == NULL)
-            return NULL;
-    }
-    return z;
 }
 
 static PyObject *
