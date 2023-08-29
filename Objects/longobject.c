@@ -3563,13 +3563,16 @@ x_mul(PyLongObject *a, PyLongObject *b)
     return long_normalize(z);
 }
 
-/* Karatsuba multiplication.  Ignores the input signs, and returns the
- * absolute value of the product (or NULL if error).
- * See Knuth Vol. 2 Chapter 4.3.3 (Pp. 294-295).
- */
-static PyLongObject *
-k_mul(PyLongObject *a, PyLongObject *b)
+PyObject *
+_PyLong_Multiply(PyLongObject *a, PyLongObject *b)
 {
+    /* fast path for single-digit multiplication */
+    if (_PyLong_BothAreCompact(a, b)) {
+        stwodigits v = medium_value(a) * medium_value(b);
+        return _PyLong_FromSTwoDigits(v);
+    }
+
+    PyObject *z;
     Py_ssize_t asize = _PyLong_DigitCount(a);
     Py_ssize_t bsize = _PyLong_DigitCount(b);
 
@@ -3577,49 +3580,35 @@ k_mul(PyLongObject *a, PyLongObject *b)
 
     /* Use gradeschool math when either number is too small. */
     if (asize <= KARATSUBA_CUTOFF) {
-        if (asize == 0)
-            return (PyLongObject *)PyLong_FromLong(0);
-        else
-            return x_mul(a, b);
+        if (asize == 0) {
+            return PyLong_FromLong(0);
+        }
+        z = (PyObject*)x_mul(a, b);
+    }
+    else {
+        PyObject *mod = PyImport_ImportModule("_pylong");
+        if (mod == NULL) {
+            return NULL;
+        }
+        z = PyObject_CallMethod(mod, "karatsuba_mul", "OO", a, b);
+        Py_DECREF(mod);
+        if (z == NULL) {
+            return NULL;
+        }
+        if (!PyLong_CheckExact(z)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "_pylong.karatsuba_mul did not return an int");
+            return NULL;
+        }
     }
 
-    PyObject *ret = NULL;
-    PyObject *mod = PyImport_ImportModule("_pylong");
-    if (mod == NULL) {
-        return NULL;
-    }
-    ret = PyObject_CallMethod(mod, "karatsuba_mul", "OO", a, b);
-    Py_DECREF(mod);
-    if (ret == NULL) {
-        return NULL;
-    }
-    if (!PyLong_CheckExact(ret)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "_pylong.karatsuba_mul did not return an int");
-        return NULL;
-    }
-    return (PyLongObject*)ret;
-}
-
-PyObject *
-_PyLong_Multiply(PyLongObject *a, PyLongObject *b)
-{
-    PyLongObject *z;
-
-    /* fast path for single-digit multiplication */
-    if (_PyLong_BothAreCompact(a, b)) {
-        stwodigits v = medium_value(a) * medium_value(b);
-        return _PyLong_FromSTwoDigits(v);
-    }
-
-    z = k_mul(a, b);
     /* Negate if exactly one of the inputs is negative. */
     if (!_PyLong_SameSign(a, b) && z) {
-        _PyLong_Negate(&z);
+        _PyLong_Negate((PyLongObject**)&z);
         if (z == NULL)
             return NULL;
     }
-    return (PyObject *)z;
+    return z;
 }
 
 static PyObject *

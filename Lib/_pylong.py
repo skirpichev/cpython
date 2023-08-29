@@ -14,7 +14,6 @@ maximum performance, they should use something like gmpy2."""
 
 import re
 import decimal
-import sys
 
 
 def int_to_decimal(n):
@@ -286,22 +285,14 @@ def int_divmod(a, b):
         return _divmod_pos(a, b)
 
 
-SHIFT = sys.int_info.bits_per_digit
-KARATSUBA_CUTOFF = 70*SHIFT
-
-
 def karatsuba_mul(x, y):
     x, y = map(abs, (x, y))
-    nx, ny = x.bit_length(), y.bit_length()
-    if min(nx, ny) <= KARATSUBA_CUTOFF:
-        return x * y
-    else:
-        n = max(nx, ny) // 2
-        x0 = x >> n
-        x  -= x0 << n
-        y0 = y >> n
-        y -= y0 << n
-        s1 = karatsuba_mul(x0, y0)
-        s2 = karatsuba_mul(x, y)
-        s3 = karatsuba_mul(x0 + x, y0 + y) - s1 - s2
-        return (s1 << (n << 1)) + (s3 << n) + s2
+    n = max(x.bit_length(), y.bit_length()) // 2
+    x0 = x >> n
+    x  -= x0 << n
+    y0 = y >> n
+    y -= y0 << n
+    s1 = x0 * y0
+    s2 = x * y
+    s3 = (x0 + x) * (y0 + y) - s1 - s2
+    return (s1 << (n << 1)) + (s3 << n) + s2
