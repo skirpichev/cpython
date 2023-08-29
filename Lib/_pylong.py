@@ -286,22 +286,17 @@ def int_divmod(a, b):
 
 
 def k_mul(x, y):
-    n = x.bit_length()
-    if x == y:
-        n //= 2
-        x0 = x >> n
-        x -= x0 << n
-        s1 = x0**2
-        s2 = x**2
-        s3 = (x0 + x)**2 - s1 - s2
-        return (s1 << (n << 1)) + (s3 << n) + s2
+    is_square = x == y
+    n = max(x.bit_length(), y.bit_length()) // 2
+    x0 = x >> n
+    x -= x0 << n
+    if is_square:
+        y0 = x0
+        y = x
     else:
-        n = max(n, y.bit_length()) // 2
-        x0 = x >> n
-        x -= x0 << n
         y0 = y >> n
         y -= y0 << n
-        s1 = x0 * y0
-        s2 = x * y
-        s3 = (x0 + x) * (y0 + y) - s1 - s2
-        return (s1 << (n << 1)) + (s3 << n) + s2
+    s1 = x0 * y0
+    s2 = x * y
+    s3 = (x0 + x) * (y0 + y) - s1 - s2
+    return (s1 << (n << 1)) + (s3 << n) + s2
