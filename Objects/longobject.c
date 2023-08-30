@@ -71,7 +71,7 @@ maybe_small_long(PyLongObject *v)
  * both operands contain more than KARATSUBA_CUTOFF digits (this
  * being an internal Python int digit, in base BASE).
  */
-#define KARATSUBA_CUTOFF 70
+#define KARATSUBA_CUTOFF 50
 #define KARATSUBA_SQUARE_CUTOFF (2 * KARATSUBA_CUTOFF)
 
 /* For exponentiation, use the binary left-to-right algorithm unless the
