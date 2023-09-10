@@ -886,9 +886,8 @@ complex.__new__ as complex_new
     real as r: object(c_default="NULL") = 0
     imag as i: object(c_default="NULL") = 0
 
-Create a complex number from a real part and an optional imaginary part.
-
-This is equivalent to (real + imag*1j) where imag defaults to 0.
+Create a complex number from a real part and an optional imaginary part
+or convert a string to a complex number.
 [clinic start generated code]*/
 
 static PyObject *
