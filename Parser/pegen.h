@@ -351,6 +351,9 @@ expr_ty _PyPegen_sum_plus(expr_ty left, operator_ty op, expr_ty right, int linen
 expr_ty _PyPegen_sum_minus(expr_ty left, operator_ty op, expr_ty right, int lineno,
                            int col_offset, int end_lineno, int end_col_offset,
                            PyArena *arena);
+expr_ty _PyPegen_usub(unaryop_ty op, expr_ty operand, int lineno,
+                      int col_offset, int end_lineno, int end_col_offset,
+                      PyArena *arena);
 
 // Parser API
 

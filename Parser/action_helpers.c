@@ -980,6 +980,36 @@ _PyPegen_sum_minus(expr_ty left, operator_ty op, expr_ty right, int lineno,
                         end_col_offset, arena);
 }
 
+expr_ty _PyPegen_usub(unaryop_ty op, expr_ty operand, int lineno,
+                      int col_offset, int end_lineno, int end_col_offset,
+                      PyArena *arena)
+{
+    if (operand->kind == Constant_kind
+        && PyComplex_CheckExact(operand->v.Constant.value)) {
+        asdl_expr_seq* args = _Py_asdl_expr_seq_new(2, arena);
+        asdl_keyword_seq* keywords = _Py_asdl_keyword_seq_new(0, arena);
+        PyObject *cname = PyUnicode_FromString("complex");
+        expr_ty func = _PyAST_Name(cname, Load, lineno, col_offset,
+                                   end_lineno, end_col_offset, arena);
+        PyObject* v = PyFloat_FromDouble(((PyComplexObject *)operand->v.Constant.value)->cval.imag);
+
+        asdl_seq_SET(args, 0,
+                     _PyAST_Constant(PyFloat_FromDouble(0.0), operand->v.Constant.kind,
+                                     lineno, col_offset, end_lineno,
+                                     end_col_offset, arena));
+        asdl_seq_SET(args, 1,
+                     _PyAST_UnaryOp(USub, _PyAST_Constant(v, operand->v.Constant.kind,
+                                                          lineno, col_offset, end_lineno,
+                                                          end_col_offset, arena),
+                                    lineno, col_offset, end_lineno, end_col_offset, arena));
+
+        return _PyAST_Call(func, args, keywords, lineno, col_offset,
+                           end_lineno, end_col_offset, arena);
+    }
+    return _PyAST_UnaryOp(USub, operand, lineno, col_offset, end_lineno,
+                          end_col_offset, arena);
+}
+
 mod_ty
 _PyPegen_make_module(Parser *p, asdl_stmt_seq *a) {
     asdl_type_ignore_seq *type_ignores = NULL;

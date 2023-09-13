@@ -800,7 +800,7 @@ term[expr_ty]:
 
 factor[expr_ty] (memo):
     | '+' a=factor { _PyAST_UnaryOp(UAdd, a, EXTRA) }
-    | '-' a=factor { _PyAST_UnaryOp(USub, a, EXTRA) }
+    | '-' a=factor { _PyPegen_usub(USub, a, EXTRA) }
     | '~' a=factor { _PyAST_UnaryOp(Invert, a, EXTRA) }
     | power
 
