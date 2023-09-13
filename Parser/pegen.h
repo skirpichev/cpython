@@ -345,6 +345,13 @@ void *_PyPegen_arguments_parsing_error(Parser *, expr_ty);
 expr_ty _PyPegen_get_last_comprehension_item(comprehension_ty comprehension);
 void *_PyPegen_nonparen_genexp_in_call(Parser *p, expr_ty args, asdl_comprehension_seq *comprehensions);
 
+expr_ty _PyPegen_sum_plus(expr_ty left, operator_ty op, expr_ty right, int lineno,
+                          int col_offset, int end_lineno, int end_col_offset,
+                          PyArena *arena);
+expr_ty _PyPegen_sum_minus(expr_ty left, operator_ty op, expr_ty right, int lineno,
+                           int col_offset, int end_lineno, int end_col_offset,
+                           PyArena *arena);
+
 // Parser API
 
 Parser *_PyPegen_Parser_New(struct tok_state *, int, int, int, int *, PyArena *);
