@@ -72,6 +72,12 @@ class ComplexTest(unittest.TestCase):
                 msg += ': zeros have different signs'
         self.fail(msg.format(x, y))
 
+    def assertComplexesAreIdentical(self, x, y):
+        self.assertEqual((x.real, copysign(1.0, x.real),
+                          x.imag, copysign(1.0, x.imag)),
+                         (y.real, copysign(1.0, y.real),
+                          y.imag, copysign(1.0, y.imag)))
+
     def assertClose(self, x, y, eps=1e-9):
         """Return true iff complexes x and y "are close"."""
         self.assertCloseAbs(x.real, y.real, eps)
@@ -179,6 +185,52 @@ class ComplexTest(unittest.TestCase):
             check(2 ** pow, range(1, 101), lambda delta: delta % mult == 0)
             check(2 ** pow, range(1, 101), lambda delta: False, float(i))
         check(2 ** 53, range(-100, 0), lambda delta: True)
+
+    def test_add(self):
+        self.assertAlmostEqual(1j + 1, complex(+1, 1))
+        self.assertAlmostEqual(1j + (-1), complex(-1, 1))
+        self.assertRaises(OverflowError, operator.add, 1j, 10**1000)
+        self.assertRaises(TypeError, operator.add, 1j, None)
+        self.assertRaises(TypeError, operator.add, None, 1j)
+
+        self.assertComplexesAreIdentical(0.0 + 0j, complex(0, 0))
+        self.assertComplexesAreIdentical(0j + 0.0, complex(0, 0))
+        self.assertComplexesAreIdentical(-0.0 + 0j, complex(-0.0, 0))
+        self.assertComplexesAreIdentical(0j + (-0.0), complex(-0.0, 0))
+        self.assertComplexesAreIdentical((-0.0+0j) + 0.0, complex(0, 0))
+        self.assertComplexesAreIdentical(0.0 + (-0.0+0j), complex(0, 0))
+        self.assertComplexesAreIdentical((1+0j) + (1-0j), complex(2, 0))
+        self.assertComplexesAreIdentical(0j + (-0.0-0j), complex(-0.0, 0))
+        self.assertComplexesAreIdentical(0j + (-0j), complex(0, 0))
+        self.assertComplexesAreIdentical((1+0j) + (-0.0-0j), complex(1, 0))
+        self.assertComplexesAreIdentical((-0.0+0j) + (-0j), complex(-0.0, 0))
+        self.assertComplexesAreIdentical((1+0j) + 1, complex(2, 0))
+        self.assertComplexesAreIdentical(1 + (1+0j), complex(2, 0))
+        self.assertComplexesAreIdentical((1-0j) + 1, complex(2, -0.0))
+        self.assertComplexesAreIdentical(1 + (1-0j), complex(2, -0.0))
+
+    def test_sub(self):
+        self.assertAlmostEqual(1j - 1, complex(-1, 1))
+        self.assertAlmostEqual(1j - (-1), complex(1, 1))
+        self.assertRaises(OverflowError, operator.sub, 1j, 10**1000)
+        self.assertRaises(TypeError, operator.sub, 1j, None)
+        self.assertRaises(TypeError, operator.sub, None, 1j)
+
+        self.assertComplexesAreIdentical(0.0 - 0j, complex(0, -0.0))
+        self.assertComplexesAreIdentical(0j - 0.0, complex(-0.0, 0))
+        self.assertComplexesAreIdentical(-0.0 - 0j, complex(-0.0, -0.0))
+        self.assertComplexesAreIdentical(0j - (-0.0), complex(0, 0))
+        self.assertComplexesAreIdentical((-0.0+0j) - 0.0, complex(-0.0, 0))
+        self.assertComplexesAreIdentical(0.0 - (-0.0+0j), complex(0, -0.0))
+        self.assertComplexesAreIdentical((1+0j) - (1-0j), complex(0, 0))
+        self.assertComplexesAreIdentical(0j - (-0.0-0j), complex(0, 0))
+        self.assertComplexesAreIdentical(0j - (-0j), complex(-0.0, 0))
+        self.assertComplexesAreIdentical((1+0j) - (-0.0-0j), complex(1, 0))
+        self.assertComplexesAreIdentical((-0.0+0j) - (-0j), complex(-0.0, 0))
+        self.assertComplexesAreIdentical((1+0j) - 1, complex(0, 0))
+        self.assertComplexesAreIdentical(1 - (1+0j), complex(0, -0.0))
+        self.assertComplexesAreIdentical((1-0j) - 1, complex(0, -0.0))
+        self.assertComplexesAreIdentical(1 - (1-0j), complex(0, 0))
 
     def test_mod(self):
         # % is no longer supported on complex numbers
@@ -604,6 +656,8 @@ class ComplexTest(unittest.TestCase):
 
     def test_neg(self):
         self.assertEqual(-(1+6j), -1-6j)
+        self.assertComplexesAreIdentical(-0j, complex(0, -0.0))
+        self.assertComplexesAreIdentical(-(-0.0+0j), complex(0, -0.0))
 
     def test_getnewargs(self):
         self.assertEqual((1+2j).__getnewargs__(), (1.0, 2.0))
