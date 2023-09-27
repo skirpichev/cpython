@@ -537,9 +537,39 @@ complex_mul(PyObject *v, PyObject *w)
 {
     Py_complex result;
     Py_complex a, b;
-    TO_COMPLEX(v, a);
-    TO_COMPLEX(w, b);
-    result = _Py_c_prod(a, b);
+    if (PyComplex_Check(v)) {
+        a = ((PyComplexObject *)(v))->cval;
+        if (PyComplex_Check(w)) {
+            b = ((PyComplexObject *)(w))->cval;
+            if (IS_TRUE_COMPLEX(a) && IS_TRUE_COMPLEX(b))
+                result = _Py_c_prod(a, b);
+            else {
+                result.real = -a.imag*b.imag;
+                if (IS_TRUE_COMPLEX(a))
+                    result.imag = a.real*b.imag;
+                else
+                    if (IS_TRUE_COMPLEX(b))
+                        result.imag = a.imag*b.real;
+                    else
+                        result.imag = 0.0;
+            }
+        }
+        else if (to_complex(&w, &b) < 0)
+            return w;
+        else {
+            result.real = IS_TRUE_COMPLEX(a) ? a.real*b.real : 0.0;
+            result.imag = a.imag*b.real;
+        }
+    }
+    else {
+        b = ((PyComplexObject *)(w))->cval;
+        if (to_complex(&v, &a) < 0)
+            return v;
+        else {
+            result.real = IS_TRUE_COMPLEX(b) ? a.real*b.real : 0.0;
+            result.imag = a.real*b.imag;
+        }
+    }
     return PyComplex_FromCComplex(result);
 }
 
