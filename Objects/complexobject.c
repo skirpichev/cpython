@@ -454,15 +454,43 @@ to_complex(PyObject **pobj, Py_complex *pc)
     return -1;
 }
 
+#define IS_TRUE_COMPLEX(x) ((x).real || copysign(1.0, (x).real) == -1.0)
 
 static PyObject *
 complex_add(PyObject *v, PyObject *w)
 {
     Py_complex result;
     Py_complex a, b;
-    TO_COMPLEX(v, a);
-    TO_COMPLEX(w, b);
-    result = _Py_c_sum(a, b);
+    if (PyComplex_Check(v)) {
+        a = ((PyComplexObject *)(v))->cval;
+        if (PyComplex_Check(w)) {
+            b = ((PyComplexObject *)(w))->cval;
+            result = _Py_c_sum(a, b);
+            if (!IS_TRUE_COMPLEX(a))
+                result.real = b.real;
+            else if (!IS_TRUE_COMPLEX(b))
+                result.real = a.real;
+        }
+        else if (to_complex(&w, &b) < 0)
+            return w;
+        else {
+            result.real = b.real;
+            result.imag = a.imag;
+            if (IS_TRUE_COMPLEX(a))
+                result.real += a.real;
+        }
+    }
+    else {
+        b = ((PyComplexObject *)(w))->cval;
+        if (to_complex(&v, &a) < 0)
+            return v;
+        else {
+            result.real = a.real;
+            result.imag = b.imag;
+            if (IS_TRUE_COMPLEX(b))
+                result.real += b.real;
+        }
+    }
     return PyComplex_FromCComplex(result);
 }
 
@@ -471,9 +499,36 @@ complex_sub(PyObject *v, PyObject *w)
 {
     Py_complex result;
     Py_complex a, b;
-    TO_COMPLEX(v, a);
-    TO_COMPLEX(w, b);
-    result = _Py_c_diff(a, b);
+    if (PyComplex_Check(v)) {
+        a = ((PyComplexObject *)(v))->cval;
+        if (PyComplex_Check(w)) {
+            b = ((PyComplexObject *)(w))->cval;
+            result = _Py_c_diff(a, b);
+            if (!IS_TRUE_COMPLEX(a))
+                result.real = -b.real;
+            else if (!IS_TRUE_COMPLEX(b))
+                result.real = a.real;
+        }
+        else if (to_complex(&w, &b) < 0)
+            return w;
+        else {
+            result.real = -b.real;
+            result.imag = a.imag;
+            if (IS_TRUE_COMPLEX(a))
+                result.real += a.real;
+        }
+    }
+    else {
+        b = ((PyComplexObject *)(w))->cval;
+        if (to_complex(&v, &a) < 0)
+            return v;
+        else {
+            result.real = a.real;
+            result.imag = -b.imag;
+            if (IS_TRUE_COMPLEX(b))
+                result.real -= b.real;
+        }
+    }
     return PyComplex_FromCComplex(result);
 }
 
@@ -544,7 +599,9 @@ static PyObject *
 complex_neg(PyComplexObject *v)
 {
     Py_complex neg;
-    neg.real = -v->cval.real;
+    neg.real = v->cval.real;
+    if (IS_TRUE_COMPLEX(neg))
+        neg.real = -neg.real;
     neg.imag = -v->cval.imag;
     return PyComplex_FromCComplex(neg);
 }
