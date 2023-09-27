@@ -232,6 +232,31 @@ class ComplexTest(unittest.TestCase):
         self.assertComplexesAreIdentical((1-0j) - 1, complex(0, -0.0))
         self.assertComplexesAreIdentical(1 - (1-0j), complex(0, 0))
 
+    def test_mul(self):
+        self.assertAlmostEqual(1j * 2, complex(0, 2))
+        self.assertAlmostEqual(1j * (-1), complex(0, -1))
+        self.assertRaises(OverflowError, operator.mul, 1j, 10**1000)
+        self.assertRaises(TypeError, operator.mul, 1j, None)
+        self.assertRaises(TypeError, operator.mul, None, 1j)
+
+        self.assertComplexesAreIdentical(0.0 * 0j, complex(0, 0))
+        self.assertComplexesAreIdentical(0j * 0.0, complex(0.0, 0))
+        self.assertComplexesAreIdentical(-0.0 * 0j, complex(0.0, -0.0))
+        self.assertComplexesAreIdentical(0j * (-0.0), complex(0, -0.0))
+        self.assertComplexesAreIdentical((-0.0+0j) * 0.0, complex(-0.0, 0))
+        self.assertComplexesAreIdentical(0.0 * (-0.0+0j), complex(-0.0, 0))
+        self.assertComplexesAreIdentical((-0.0+0j) * (-0.0), complex(0, -0.0))
+        self.assertComplexesAreIdentical((-0.0) * (-0.0+0j), complex(0, -0.0))
+        self.assertComplexesAreIdentical((-0.0-0j) * (-0.0), complex(0, 0))
+        self.assertComplexesAreIdentical((-0.0) * (-0.0-0j), complex(0, 0))
+        self.assertComplexesAreIdentical((1+0j) * (1-0j), complex(1, 0))
+        self.assertComplexesAreIdentical(0j * (-0.0-0j), complex(0.0, -0.0))
+        self.assertComplexesAreIdentical(0j * (-0j), complex(0, 0))
+        self.assertComplexesAreIdentical((1+0j) * (-0.0-0j), complex(0, -0.0))
+        self.assertComplexesAreIdentical((-0.0+0j) * (-0j), complex(0, 0))
+        self.assertComplexesAreIdentical((1+0j) * 1, complex(1, 0))
+        self.assertComplexesAreIdentical(1 * (1+0j), complex(1, 0))
+
     def test_mod(self):
         # % is no longer supported on complex numbers
         with self.assertRaises(TypeError):
