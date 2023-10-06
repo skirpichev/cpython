@@ -702,6 +702,26 @@ hexadecimal string representing the same number::
    '0x1.d380000000000p+11'
 
 
+.. classmethod:: float.from_number(x)
+
+   Class method to convert real number to a floating-point number.
+
+   .. versionadded:: 3.13
+
+
+Additional methods on Complex
+-----------------------------
+
+The complex type implements the :class:`numbers.Complex` :term:`abstract base
+class`.  complex also has the following additional methods.
+
+.. classmethod:: complex.from_number(x)
+
+   Class method to convert number to a complex floating-point number.
+
+   .. versionadded:: 3.13
+
+
 .. _numeric-hash:
 
 Hashing of numeric types
