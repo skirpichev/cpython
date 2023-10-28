@@ -89,6 +89,8 @@ struct _longobject {
     _PyLongValue long_value;
 };
 
+PyAPI_FUNC(PyLongObject *) _PyLong_New(Py_ssize_t);
+
 
 /* Inline some internals for speed. These should be in pycore_long.h
  * if user code didn't need them inlined. */

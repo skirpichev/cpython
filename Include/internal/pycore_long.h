@@ -47,8 +47,6 @@ extern "C" {
 # error "_PY_LONG_DEFAULT_MAX_STR_DIGITS smaller than threshold."
 #endif
 
-extern PyLongObject* _PyLong_New(Py_ssize_t);
-
 // Return a copy of src.
 extern PyObject* _PyLong_Copy(PyLongObject *src);
 
