@@ -1143,13 +1143,6 @@ float_conjugate_impl(PyObject *self)
 
 /* turn ASCII hex characters into integer values and vice versa */
 
-static char
-char_from_hex(int x)
-{
-    assert(0 <= x && x < 16);
-    return Py_hexdigits[x];
-}
-
 static int
 hex_from_char(char c) {
     int x;
@@ -1215,12 +1208,6 @@ hex_from_char(char c) {
     return x;
 }
 
-/* convert a float to a hexadecimal string */
-
-/* TOHEX_NBITS is DBL_MANT_DIG rounded up to the next integer
-   of the form 4k+1. */
-#define TOHEX_NBITS DBL_MANT_DIG + 3 - (DBL_MANT_DIG+2)%4
-
 /*[clinic input]
 float.hex
 
@@ -1236,54 +1223,14 @@ static PyObject *
 float_hex_impl(PyObject *self)
 /*[clinic end generated code: output=0ebc9836e4d302d4 input=bec1271a33d47e67]*/
 {
-    double x, m;
-    int e, shift, i, si, esign;
-    /* Space for 1+(TOHEX_NBITS-1)/4 digits, a decimal point, and the
-       trailing NUL byte. */
-    char s[(TOHEX_NBITS-1)/4+3];
+    double x;
+    Py_ssize_t size;
+    char s[DBL_DIG + 7];
 
     CONVERT_TO_DOUBLE(self, x);
 
-    if (Py_IS_NAN(x) || Py_IS_INFINITY(x))
-        return float_repr((PyFloatObject *)self);
-
-    if (x == 0.0) {
-        if (copysign(1.0, x) == -1.0)
-            return PyUnicode_FromString("-0x0.0p+0");
-        else
-            return PyUnicode_FromString("0x0.0p+0");
-    }
-
-    m = frexp(fabs(x), &e);
-    shift = 1 - Py_MAX(DBL_MIN_EXP - e, 0);
-    m = ldexp(m, shift);
-    e -= shift;
-
-    si = 0;
-    s[si] = char_from_hex((int)m);
-    si++;
-    m -= (int)m;
-    s[si] = '.';
-    si++;
-    for (i=0; i < (TOHEX_NBITS-1)/4; i++) {
-        m *= 16.0;
-        s[si] = char_from_hex((int)m);
-        si++;
-        m -= (int)m;
-    }
-    s[si] = '\0';
-
-    if (e < 0) {
-        esign = (int)'-';
-        e = -e;
-    }
-    else
-        esign = (int)'+';
-
-    if (x < 0.0)
-        return PyUnicode_FromFormat("-0x%sp%c%d", s, esign, e);
-    else
-        return PyUnicode_FromFormat("0x%sp%c%d", s, esign, e);
+    size = sprintf(s, "%a", x);
+    return PyUnicode_FromStringAndSize(s, size);
 }
 
 /* Convert a hexadecimal string to a float. */
