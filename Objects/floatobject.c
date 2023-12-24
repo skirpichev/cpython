@@ -1141,73 +1141,6 @@ float_conjugate_impl(PyObject *self)
     return float_float(self);
 }
 
-/* turn ASCII hex characters into integer values and vice versa */
-
-static int
-hex_from_char(char c) {
-    int x;
-    switch(c) {
-    case '0':
-        x = 0;
-        break;
-    case '1':
-        x = 1;
-        break;
-    case '2':
-        x = 2;
-        break;
-    case '3':
-        x = 3;
-        break;
-    case '4':
-        x = 4;
-        break;
-    case '5':
-        x = 5;
-        break;
-    case '6':
-        x = 6;
-        break;
-    case '7':
-        x = 7;
-        break;
-    case '8':
-        x = 8;
-        break;
-    case '9':
-        x = 9;
-        break;
-    case 'a':
-    case 'A':
-        x = 10;
-        break;
-    case 'b':
-    case 'B':
-        x = 11;
-        break;
-    case 'c':
-    case 'C':
-        x = 12;
-        break;
-    case 'd':
-    case 'D':
-        x = 13;
-        break;
-    case 'e':
-    case 'E':
-        x = 14;
-        break;
-    case 'f':
-    case 'F':
-        x = 15;
-        break;
-    default:
-        x = -1;
-        break;
-    }
-    return x;
-}
-
 /*[clinic input]
 float.hex
 
@@ -1256,75 +1189,23 @@ float_fromhex(PyTypeObject *type, PyObject *string)
 {
     PyObject *result;
     double x;
-    long exp, top_exp, lsb, key_digit;
-    const char *s, *coeff_start, *s_store, *coeff_end, *exp_start, *s_end;
-    int half_eps, digit, round_up, negate=0;
-    Py_ssize_t length, ndigits, fdigits, i;
+    const char *s, *s_begin;
+    char *s_end;
+    int negate = 0, has_sign = 1;
+    Py_ssize_t length;
 
-    /*
-     * For the sake of simplicity and correctness, we impose an artificial
-     * limit on ndigits, the total number of hex digits in the coefficient
-     * The limit is chosen to ensure that, writing exp for the exponent,
-     *
-     *   (1) if exp > LONG_MAX/2 then the value of the hex string is
-     *   guaranteed to overflow (provided it's nonzero)
-     *
-     *   (2) if exp < LONG_MIN/2 then the value of the hex string is
-     *   guaranteed to underflow to 0.
-     *
-     *   (3) if LONG_MIN/2 <= exp <= LONG_MAX/2 then there's no danger of
-     *   overflow in the calculation of exp and top_exp below.
-     *
-     * More specifically, ndigits is assumed to satisfy the following
-     * inequalities:
-     *
-     *   4*ndigits <= DBL_MIN_EXP - DBL_MANT_DIG - LONG_MIN/2
-     *   4*ndigits <= LONG_MAX/2 + 1 - DBL_MAX_EXP
-     *
-     * If either of these inequalities is not satisfied, a ValueError is
-     * raised.  Otherwise, write x for the value of the hex string, and
-     * assume x is nonzero.  Then
-     *
-     *   2**(exp-4*ndigits) <= |x| < 2**(exp+4*ndigits).
-     *
-     * Now if exp > LONG_MAX/2 then:
-     *
-     *   exp - 4*ndigits >= LONG_MAX/2 + 1 - (LONG_MAX/2 + 1 - DBL_MAX_EXP)
-     *                    = DBL_MAX_EXP
-     *
-     * so |x| >= 2**DBL_MAX_EXP, which is too large to be stored in C
-     * double, so overflows.  If exp < LONG_MIN/2, then
-     *
-     *   exp + 4*ndigits <= LONG_MIN/2 - 1 + (
-     *                      DBL_MIN_EXP - DBL_MANT_DIG - LONG_MIN/2)
-     *                    = DBL_MIN_EXP - DBL_MANT_DIG - 1
-     *
-     * and so |x| < 2**(DBL_MIN_EXP-DBL_MANT_DIG-1), hence underflows to 0
-     * when converted to a C double.
-     *
-     * It's easy to show that if LONG_MIN/2 <= exp <= LONG_MAX/2 then both
-     * exp+4*ndigits and exp-4*ndigits are within the range of a long.
-     */
-
-    s = PyUnicode_AsUTF8AndSize(string, &length);
+    s = (char*) PyUnicode_AsUTF8AndSize(string, &length);
     if (s == NULL)
         return NULL;
-    s_end = s + length;
+    s_begin = s;
 
-    /********************
-     * Parse the string *
-     ********************/
-
-    /* leading whitespace */
     while (Py_ISSPACE(*s))
         s++;
 
     /* infinities and nans */
-    x = _Py_parse_inf_or_nan(s, (char **)&coeff_end);
-    if (coeff_end != s) {
-        s = coeff_end;
+    x = _Py_parse_inf_or_nan(s, &s_end);
+    if (s_end != s)
         goto finished;
-    }
 
     /* optional sign */
     if (*s == '-') {
@@ -1333,162 +1214,68 @@ float_fromhex(PyTypeObject *type, PyObject *string)
     }
     else if (*s == '+')
         s++;
-
-    /* [0x] */
-    s_store = s;
-    if (*s == '0') {
-        s++;
-        if (*s == 'x' || *s == 'X')
-            s++;
-        else
-            s = s_store;
-    }
-
-    /* coefficient: <integer> [. <fraction>] */
-    coeff_start = s;
-    while (hex_from_char(*s) >= 0)
-        s++;
-    s_store = s;
-    if (*s == '.') {
-        s++;
-        while (hex_from_char(*s) >= 0)
-            s++;
-        coeff_end = s-1;
-    }
     else
-        coeff_end = s;
+        has_sign = 0;
 
-    /* ndigits = total # of hex digits; fdigits = # after point */
-    ndigits = coeff_end - coeff_start;
-    fdigits = coeff_end - s_store;
-    if (ndigits == 0)
-        goto parse_error;
-    if (ndigits > Py_MIN(DBL_MIN_EXP - DBL_MANT_DIG - LONG_MIN/2,
-                         LONG_MAX/2 + 1 - DBL_MAX_EXP)/4)
-        goto insane_length_error;
-
-    /* [p <exponent>] */
-    if (*s == 'p' || *s == 'P') {
-        s++;
-        exp_start = s;
-        if (*s == '-' || *s == '+')
-            s++;
-        if (!('0' <= *s && *s <= '9'))
-            goto parse_error;
-        s++;
-        while ('0' <= *s && *s <= '9')
-            s++;
-        exp = strtol(exp_start, NULL, 10);
-    }
-    else
-        exp = 0;
-
-/* for 0 <= j < ndigits, HEX_DIGIT(j) gives the jth most significant digit */
-#define HEX_DIGIT(j) hex_from_char(*((j) < fdigits ?            \
-                     coeff_end-(j) :                                    \
-                     coeff_end-1-(j)))
-
-    /*******************************************
-     * Compute rounded value of the hex string *
-     *******************************************/
-
-    /* Discard leading zeros, and catch extreme overflow and underflow */
-    while (ndigits > 0 && HEX_DIGIT(ndigits-1) == 0)
-        ndigits--;
-    if (ndigits == 0 || exp < LONG_MIN/2) {
-        x = 0.0;
-        goto finished;
-    }
-    if (exp > LONG_MAX/2)
-        goto overflow_error;
-
-    /* Adjust exponent for fractional part. */
-    exp = exp - 4*((long)fdigits);
-
-    /* top_exp = 1 more than exponent of most sig. bit of coefficient */
-    top_exp = exp + 4*((long)ndigits - 1);
-    for (digit = HEX_DIGIT(ndigits-1); digit != 0; digit /= 2)
-        top_exp++;
-
-    /* catch almost all nonextreme cases of overflow and underflow here */
-    if (top_exp < DBL_MIN_EXP - DBL_MANT_DIG) {
-        x = 0.0;
-        goto finished;
-    }
-    if (top_exp > DBL_MAX_EXP)
-        goto overflow_error;
-
-    /* lsb = exponent of least significant bit of the *rounded* value.
-       This is top_exp - DBL_MANT_DIG unless result is subnormal. */
-    lsb = Py_MAX(top_exp, (long)DBL_MIN_EXP) - DBL_MANT_DIG;
-
-    x = 0.0;
-    if (exp >= lsb) {
-        /* no rounding required */
-        for (i = ndigits-1; i >= 0; i--)
-            x = 16.0*x + HEX_DIGIT(i);
-        x = ldexp(x, (int)(exp));
-        goto finished;
-    }
-    /* rounding required.  key_digit is the index of the hex digit
-       containing the first bit to be rounded away. */
-    half_eps = 1 << (int)((lsb - exp - 1) % 4);
-    key_digit = (lsb - exp - 1) / 4;
-    for (i = ndigits-1; i > key_digit; i--)
-        x = 16.0*x + HEX_DIGIT(i);
-    digit = HEX_DIGIT(key_digit);
-    x = 16.0*x + (double)(digit & (16-2*half_eps));
-
-    /* round-half-even: round up if bit lsb-1 is 1 and at least one of
-       bits lsb, lsb-2, lsb-3, lsb-4, ... is 1. */
-    if ((digit & half_eps) != 0) {
-        round_up = 0;
-        if ((digit & (3*half_eps-1)) != 0 || (half_eps == 8 &&
-                key_digit+1 < ndigits && (HEX_DIGIT(key_digit+1) & 1) != 0))
-            round_up = 1;
-        else
-            for (i = key_digit-1; i >= 0; i--)
-                if (HEX_DIGIT(i) != 0) {
-                    round_up = 1;
-                    break;
-                }
-        if (round_up) {
-            x += 2*half_eps;
-            if (top_exp == DBL_MAX_EXP &&
-                x == ldexp((double)(2*half_eps), DBL_MANT_DIG))
-                /* overflow corner case: pre-rounded value <
-                   2**DBL_MAX_EXP; rounded=2**DBL_MAX_EXP. */
-                goto overflow_error;
+    /* missing 0x prefix */
+    if (*s != '0' || (*(s+1) != 'x' && *(s+1) != 'X')) {
+        PyObject *s0x = PyUnicode_FromString("0x");
+        PyObject *tmp2;
+        if (!has_sign) {
+            if (Py_ISSPACE(*s) || *s == '\0')
+                tmp2 = PyUnicode_Concat(s0x, string);
+            else {
+                PyObject *tmp = PyUnicode_FromStringAndSize(s, s_begin + length - s);
+                tmp2 = PyUnicode_Concat(s0x, tmp);
+                Py_DECREF(tmp);
+            }
         }
+        else {
+            if (!negate) {
+                PyObject *plus = PyUnicode_FromString("+");
+                tmp2 = PyUnicode_Replace(string, plus, s0x, 1);
+                Py_DECREF(plus);
+            }
+            else {
+                PyObject *minus = PyUnicode_FromString("-");
+                PyObject *sm0x = PyUnicode_FromString("-0x");
+                tmp2 = PyUnicode_Replace(string, minus, sm0x, 1);
+                Py_DECREF(minus);
+                Py_DECREF(sm0x);
+            }
+        }
+        Py_DECREF(s0x);
+
+        result = float_fromhex(type, tmp2);
+        Py_DECREF(tmp2);
+        return result;
     }
-    x = ldexp(x, (int)(exp+4*key_digit));
+
+    errno = 0;
+    x = strtod(s, &s_end);
 
   finished:
-    /* optional trailing whitespace leading to the end of the string */
+    s = s_end;
     while (Py_ISSPACE(*s))
         s++;
-    if (s != s_end)
-        goto parse_error;
+
+    if (s != s_begin + length) {
+        PyErr_SetString(PyExc_ValueError,
+                        "invalid hexadecimal floating-point string");
+        return NULL;
+    }
+
+    if (x == HUGE_VAL && errno == ERANGE) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "hexadecimal value too large to represent as a float");
+        return NULL;
+    }
+
     result = PyFloat_FromDouble(negate ? -x : x);
     if (type != &PyFloat_Type && result != NULL) {
         Py_SETREF(result, PyObject_CallOneArg((PyObject *)type, result));
     }
     return result;
-
-  overflow_error:
-    PyErr_SetString(PyExc_OverflowError,
-                    "hexadecimal value too large to represent as a float");
-    return NULL;
-
-  parse_error:
-    PyErr_SetString(PyExc_ValueError,
-                    "invalid hexadecimal floating-point string");
-    return NULL;
-
-  insane_length_error:
-    PyErr_SetString(PyExc_ValueError,
-                    "hexadecimal string too long to convert");
-    return NULL;
 }
 
 /*[clinic input]
