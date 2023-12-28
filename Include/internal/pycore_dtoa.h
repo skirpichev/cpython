@@ -61,6 +61,7 @@ struct _dtoa_state {
 #endif  // !Py_USING_MEMORY_DEBUGGER
 
 
+extern double _Py_dg_strtod_hex(const char *str, char **ptr);
 extern double _Py_dg_strtod(const char *str, char **ptr);
 extern char* _Py_dg_dtoa(double d, int mode, int ndigits,
                          int *decpt, int *sign, char **rve);

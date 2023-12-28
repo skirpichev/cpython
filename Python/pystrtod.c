@@ -169,13 +169,8 @@ _PyOS_ascii_strtod(const char *nptr, char **endptr)
         p++;
     }
 
-    /* Some platform strtods accept hex floats; Python shouldn't (at the
-       moment), so we check explicitly for strings starting with '0x'. */
-    if (*p == '0' && (*(p+1) == 'x' || *(p+1) == 'X'))
-        goto invalid_string;
-
     /* Check that what's left begins with a digit or decimal point */
-    if (!Py_ISDIGIT(*p) && *p != '.')
+    if (!Py_ISXDIGIT(*p) && *p != '.')
         goto invalid_string;
 
     digits_pos = p;
@@ -186,7 +181,7 @@ _PyOS_ascii_strtod(const char *nptr, char **endptr)
            swapped for the current locale's decimal point before we
            call strtod.  On the other hand, if we find the current
            locale's decimal point then the input is invalid. */
-        while (Py_ISDIGIT(*p))
+        while (Py_ISXDIGIT(*p))
             p++;
 
         if (*p == '.')
@@ -194,10 +189,10 @@ _PyOS_ascii_strtod(const char *nptr, char **endptr)
             decimal_point_pos = p++;
 
             /* locate end of number */
-            while (Py_ISDIGIT(*p))
+            while (Py_ISXDIGIT(*p))
                 p++;
 
-            if (*p == 'e' || *p == 'E')
+            if (*p == 'e' || *p == 'E' || *p == 'p' || *p == 'P')
                 p++;
             if (*p == '+' || *p == '-')
                 p++;
