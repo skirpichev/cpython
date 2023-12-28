@@ -319,7 +319,7 @@ The general form of a *standard format specifier* is:
    width: `~python-grammar:digit`+
    grouping_option: "_" | ","
    precision: `~python-grammar:digit`+
-   type: "b" | "c" | "d" | "e" | "E" | "f" | "F" | "g" | "G" | "n" | "o" | "s" | "x" | "X" | "%"
+   type: "a" | "A" | "b" | "c" | "d" | "e" | "E" | "f" | "F" | "g" | "G" | "n" | "o" | "s" | "x" | "X" | "%"
 
 If a valid *align* value is specified, it can be preceded by a *fill*
 character that can be any character and defaults to a space if omitted.
@@ -574,6 +574,21 @@ The available presentation types for :class:`float` and
    | ``'%'`` | Percentage. Multiplies the number by 100 and displays    |
    |         | in fixed (``'f'``) format, followed by a percent sign.   |
    +---------+----------------------------------------------------------+
+   | ``'a'`` | Represent the number by a hexadecimal string in the      |
+   |         | style ``[±]0xh.hhhhp±d``, where there is one hexadecimal |
+   |         | digit before the decimal-point character and the number  |
+   |         | of hexadecimal digits after it is equal to the           |
+   |         | precision; if the precision is missing, then the         |
+   |         | precision is sufficient for an exact representation of   |
+   |         | the value.  If the precision is zero and the # flag is   |
+   |         | not specified, no decimal-point character appears.       |
+   |         | The exponent ``d`` is written in decimal, it always      |
+   |         | contains at least one digit, and it gives the power of 2 |
+   |         | by which to multiply the coefficient.                    |
+   +---------+----------------------------------------------------------+
+   | ``'A'`` | Same as ``'a'``, but uses ``0X`` prefix and ``'P'`` as   |
+   |         | the exponent separator.                                  |
+   +---------+----------------------------------------------------------+
    | None    | For :class:`float` this is the same as ``'g'``, except   |
    |         | that when fixed-point notation is used to format the     |
    |         | result, it always includes at least one digit past the   |
@@ -587,6 +602,9 @@ The available presentation types for :class:`float` and
    |         | The overall effect is to match the output of :func:`str` |
    |         | as altered by the other format modifiers.                |
    +---------+----------------------------------------------------------+
+
+.. versionchanged:: 3.13
+   Added support for ``'a'`` and ``'A'`` format types.
 
 
 .. _formatexamples:

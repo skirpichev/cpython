@@ -656,27 +656,35 @@ are always available.  They are listed here in alphabetical order.
 
    Return a floating point number constructed from a number or string *x*.
 
-   If the argument is a string, it should contain a decimal number, optionally
-   preceded by a sign, and optionally embedded in whitespace.  The optional
-   sign may be ``'+'`` or ``'-'``; a ``'+'`` sign has no effect on the value
-   produced.  The argument may also be a string representing a NaN
-   (not-a-number), or positive or negative infinity.  More precisely, the
-   input must conform to the ``floatvalue`` production rule in the following
-   grammar, after leading and trailing whitespace characters are removed:
+   If the argument is a string, it should contain a decimal number or a
+   hexadecimal number, optionally preceded by a sign, and optionally embedded
+   in whitespace.  The optional sign may be ``'+'`` or ``'-'``; a ``'+'`` sign
+   has no effect on the value produced.  The argument may also be a string
+   representing a NaN (not-a-number), or positive or negative infinity.  More
+   precisely, the input must conform to the ``floatvalue`` production rule in
+   the following grammar, after leading and trailing whitespace characters are
+   removed:
 
    .. productionlist:: float
       sign: "+" | "-"
       infinity: "Infinity" | "inf"
       nan: "nan"
       digit: <a Unicode decimal digit, i.e. characters in Unicode general category Nd>
+      hexdigit: `digit` | "a"..."f" | "A"..."F"
       digitpart: `digit` (["_"] `digit`)*
+      hexdigitpart: `hexdigit` (["_"] `hexdigit`)*
       number: [`digitpart`] "." `digitpart` | `digitpart` ["."]
+      hexnumber: ("0x | "0X") [`hexdigitpart`] "." `hexdigitpart` | `hexdigitpart` ["."]
       exponent: ("e" | "E") ["+" | "-"] `digitpart`
-      floatnumber: number [`exponent`]
+      hexexponent: ("p" | "P") ["+" | "-"] `digitpart`
+      floatnumber: `number` [`exponent`] | `hexnumber` [`hexexponent`]
       floatvalue: [`sign`] (`floatnumber` | `infinity` | `nan`)
 
    Case is not significant, so, for example, "inf", "Inf", "INFINITY", and
-   "iNfINity" are all acceptable spellings for positive infinity.
+   "iNfINity" are all acceptable spellings for positive infinity.  Note also
+   that the exponent of hexadecimal floating point number is written in
+   decimal, and that it gives the power of 2 by which to multiply the
+   coefficient.
 
    Otherwise, if the argument is an integer or a floating point number, a
    floating point number with the same value (within Python's floating point
@@ -699,6 +707,8 @@ are always available.  They are listed here in alphabetical order.
       0.001
       >>> float('+1E6')
       1000000.0
+      >>> float('0x3.p-1')
+      1.5
       >>> float('-Infinity')
       -inf
 
@@ -712,6 +722,9 @@ are always available.  They are listed here in alphabetical order.
 
    .. versionchanged:: 3.8
       Falls back to :meth:`~object.__index__` if :meth:`~object.__float__` is not defined.
+
+   .. versionchanged:: 3.13
+      Added support for hexadecimal floating-point numbers.
 
 
 .. index::

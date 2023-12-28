@@ -951,17 +951,31 @@ Floating point literals
 Floating point literals are described by the following lexical definitions:
 
 .. productionlist:: python-grammar
-   floatnumber: `pointfloat` | `exponentfloat`
+   floatnumber: `pointfloat` | `exponentfloat` | `hexfloat`
    pointfloat: [`digitpart`] `fraction` | `digitpart` "."
    exponentfloat: (`digitpart` | `pointfloat`) `exponent`
+   hexfloat: ("0x | "0X") `hexpointfloat` | `hexexponentfloat`
    digitpart: `digit` (["_"] `digit`)*
    fraction: "." `digitpart`
    exponent: ("e" | "E") ["+" | "-"] `digitpart`
+   hexpointfloat: [`hexdigit`] `hexfraction` | `hexdigitpart` "."
+   hexexponentfloat: (`hexdigitpart` | `hexpointfloat`) `hexexponent`
+   hexfraction: "." `hexdigitpart`
+   hexdigitpart: `hexdigit` (["_"] `hexdigit`)*
+   hexexponent: ("p" | "P") ["+" | "-"] `digitpart`
 
-Note that the integer and exponent parts are always interpreted using radix 10.
+Note that the exponent parts are always interpreted using radix 10.
 For example, ``077e010`` is legal, and denotes the same number as ``77e10``. The
 allowed range of floating point literals is implementation-dependent.  As in
 integer literals, underscores are supported for digit grouping.
+
+The exponent of hexadecimal floating point literal is written in decimal, and
+that it gives the power of 2 by which to multiply the coefficient::
+
+   >>> 0x3.a7p10
+   3740.0
+   >>> _ == (3 + 10./16 + 7./16**2) * 2.0**10
+   True
 
 Some examples of floating point literals::
 
@@ -969,6 +983,9 @@ Some examples of floating point literals::
 
 .. versionchanged:: 3.6
    Underscores are now allowed for grouping purposes in literals.
+
+.. versionchanged:: 3.13
+   Added support for hexadecimal floating-point literals.
 
 
 .. index::
@@ -981,7 +998,7 @@ Imaginary literals
 Imaginary literals are described by the following lexical definitions:
 
 .. productionlist:: python-grammar
-   imagnumber: (`floatnumber` | `digitpart`) ("j" | "J")
+   imagnumber: (`floatnumber` | `digitpart` | ("0x | "0X") `hexdigitpart`) ("j" | "J")
 
 An imaginary literal yields a complex number with a real part of 0.0.  Complex
 numbers are represented as a pair of floating point numbers and have the same
