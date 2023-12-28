@@ -370,7 +370,7 @@ class TypesTests(unittest.TestCase):
         # ensure that only int and float type specifiers work
         for format_spec in ([chr(x) for x in range(ord('a'), ord('z')+1)] +
                             [chr(x) for x in range(ord('A'), ord('Z')+1)]):
-            if not format_spec in 'bcdoxXeEfFgGn%':
+            if not format_spec in 'aAbcdoxXeEfFgGn%':
                 self.assertRaises(ValueError, 0 .__format__, format_spec)
                 self.assertRaises(ValueError, 1 .__format__, format_spec)
                 self.assertRaises(ValueError, (-1) .__format__, format_spec)

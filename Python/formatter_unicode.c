@@ -299,6 +299,8 @@ parse_internal_render_format_spec(PyObject *obj,
 
     if (format->thousands_separators) {
         switch (format->type) {
+        case 'a':
+        case 'A':
         case 'd':
         case 'e':
         case 'f':
@@ -1100,7 +1102,7 @@ format_float_internal(PyObject *value,
         add_pct = 1;
     }
 
-    if (precision < 0)
+    if (precision < 0 && type != 'a' && type != 'A')
         precision = default_precision;
     else if (type == 'r')
         type = 'g';
@@ -1520,6 +1522,8 @@ _PyLong_FormatAdvancedWriter(_PyUnicodeWriter *writer,
         result = format_long_internal(obj, &format, writer);
         break;
 
+    case 'a':
+    case 'A':
     case 'e':
     case 'E':
     case 'f':
@@ -1574,6 +1578,8 @@ _PyFloat_FormatAdvancedWriter(_PyUnicodeWriter *writer,
     case 'G':
     case 'n':
     case '%':
+    case 'a':
+    case 'A':
         /* no conversion, already a float.  do the formatting */
         return format_float_internal(obj, &format, writer);
 
@@ -1605,6 +1611,8 @@ _PyComplex_FormatAdvancedWriter(_PyUnicodeWriter *writer,
     /* type conversion? */
     switch (format.type) {
     case '\0': /* No format code: like 'g', but with at least one decimal. */
+    case 'a':
+    case 'A':
     case 'e':
     case 'E':
     case 'f':

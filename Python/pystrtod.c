@@ -4,6 +4,7 @@
 #include "pycore_dtoa.h"          // _Py_dg_strtod()
 #include "pycore_pymath.h"        // _PY_SHORT_FLOAT_REPR
 
+#include <float.h>                // DBL_MANT_DIG
 #include <locale.h>               // localeconv()
 
 /* Case-insensitive string match used for nan and inf detection; t should be
@@ -412,7 +413,7 @@ change_decimal_from_locale_to_dot(char* buffer)
 
         if (*buffer == '+' || *buffer == '-')
             buffer++;
-        while (Py_ISDIGIT(*buffer))
+        while (Py_ISXDIGIT(*buffer))
             buffer++;
         if (strncmp(buffer, decimal_point, decimal_point_len) == 0) {
             *buffer = '.';
@@ -431,18 +432,13 @@ change_decimal_from_locale_to_dot(char* buffer)
 }
 
 
-/* From the C99 standard, section 7.19.6:
-The exponent always contains at least two digits, and only as many more digits
-as necessary to represent the exponent.
-*/
-#define MIN_EXPONENT_DIGITS 2
-
-/* Ensure that any exponent, if present, is at least MIN_EXPONENT_DIGITS
+/* Ensure that any exponent, if present, is at least min_exponent_digits
    in length. */
 Py_LOCAL_INLINE(void)
-ensure_minimum_exponent_length(char* buffer, size_t buf_size)
+ensure_minimum_exponent_length(char* buffer, size_t buf_size,
+                               int min_exponent_digits)
 {
-    char *p = strpbrk(buffer, "eE");
+    char *p = strpbrk(buffer, "pPeE");
     if (p && (*(p + 1) == '-' || *(p + 1) == '+')) {
         char *start = p + 2;
         int exponent_digit_cnt = 0;
@@ -465,17 +461,17 @@ ensure_minimum_exponent_length(char* buffer, size_t buf_size)
         }
 
         significant_digit_cnt = exponent_digit_cnt - leading_zero_cnt;
-        if (exponent_digit_cnt == MIN_EXPONENT_DIGITS) {
+        if (exponent_digit_cnt == min_exponent_digits) {
             /* If there are 2 exactly digits, we're done,
                regardless of what they contain */
         }
-        else if (exponent_digit_cnt > MIN_EXPONENT_DIGITS) {
+        else if (exponent_digit_cnt > min_exponent_digits) {
             int extra_zeros_cnt;
 
             /* There are more than 2 digits in the exponent.  See
                if we can delete some of the leading zeros */
-            if (significant_digit_cnt < MIN_EXPONENT_DIGITS)
-                significant_digit_cnt = MIN_EXPONENT_DIGITS;
+            if (significant_digit_cnt < min_exponent_digits)
+                significant_digit_cnt = min_exponent_digits;
             extra_zeros_cnt = exponent_digit_cnt -
                 significant_digit_cnt;
 
@@ -492,7 +488,7 @@ ensure_minimum_exponent_length(char* buffer, size_t buf_size)
         else {
             /* If there are fewer than 2 digits, add zeros
                until there are 2, if there's enough room */
-            int zeros = MIN_EXPONENT_DIGITS - exponent_digit_cnt;
+            int zeros = min_exponent_digits - exponent_digit_cnt;
             if (start + zeros + exponent_digit_cnt + 1
                   < buffer + buf_size) {
                 memmove(start + zeros, start,
@@ -702,6 +698,7 @@ _PyOS_ascii_formatd(char       *buffer,
     if (!(format_char == 'e' || format_char == 'E' ||
           format_char == 'f' || format_char == 'F' ||
           format_char == 'g' || format_char == 'G' ||
+          format_char == 'a' || format_char == 'A' ||
           format_char == 'Z'))
         return NULL;
 
@@ -719,7 +716,6 @@ _PyOS_ascii_formatd(char       *buffer,
         format = tmp_format;
     }
 
-
     /* Have PyOS_snprintf do the hard work */
     PyOS_snprintf(buffer, buf_size, format, d);
 
@@ -730,11 +726,19 @@ _PyOS_ascii_formatd(char       *buffer,
     change_decimal_from_locale_to_dot(buffer);
 
     /* If an exponent exists, ensure that the exponent is at least
-       MIN_EXPONENT_DIGITS digits, providing the buffer is large enough
+       min_exponent_digits digits, providing the buffer is large enough
        for the extra zeros.  Also, if there are more than
-       MIN_EXPONENT_DIGITS, remove as many zeros as possible until we get
-       back to MIN_EXPONENT_DIGITS */
-    ensure_minimum_exponent_length(buffer, buf_size);
+       min_exponent_digits, remove as many zeros as possible until we get
+       back to min_exponent_digits.
+
+       From the C11 standard, section 7.21.6:
+       The exponent always contains at least two digits in scientific
+       notation or at least one digit in hexadecimal notation, and only
+       as many more digits as necessary to represent the exponent.
+     */
+    int min_exponent_digits = (format_char == 'a' || format_char == 'A')? 1 : 2;
+
+    ensure_minimum_exponent_length(buffer, buf_size, min_exponent_digits);
 
     /* If format_char is 'Z', make sure we have at least one character
        after the decimal point (and make sure we have a decimal point);
@@ -766,6 +770,7 @@ char * PyOS_double_to_string(double val,
     case 'e':          /* exponent */
     case 'f':          /* fixed */
     case 'g':          /* general */
+    case 'a':          /* double in hexadecimal */
         break;
     case 'E':
         upper = 1;
@@ -778,6 +783,10 @@ char * PyOS_double_to_string(double val,
     case 'G':
         upper = 1;
         format_code = 'g';
+        break;
+    case 'A':
+        upper = 1;
+        format_code = 'a';
         break;
     case 'r':          /* repr format */
         /* Supplied precision is unused, must be 0. */
@@ -913,6 +922,96 @@ char * PyOS_double_to_string(double val,
 
 /* _Py_dg_dtoa is available. */
 
+/* turn ASCII hex characters into integer values and vice versa */
+
+static char
+char_from_hex(int x, int upper)
+{
+    assert(0 <= x && x < 16);
+    char c = Py_hexdigits[x];
+    if (upper) {
+        c = Py_TOUPPER(c);
+    }
+    return c;
+}
+
+/* convert a float to a hexadecimal string */
+
+/* TOHEX_NBITS is DBL_MANT_DIG rounded up to the next integer
+   of the form 4k+1. */
+#define TOHEX_NBITS DBL_MANT_DIG + 3 - (DBL_MANT_DIG+2)%4
+
+char *
+_Py_dg_dtoa_hex(double x, int precision, int always_add_sign,
+                int use_alt_formatting, int upper)
+{
+    int e, shift, i, si;
+    double m = frexp(fabs(x), &e);
+
+    if (m || e) {
+        shift = 1 - Py_MAX(DBL_MIN_EXP - e, 0);
+        m = ldexp(m, shift);
+        e -= shift;
+    }
+
+    if (precision < 0) {
+        precision = (TOHEX_NBITS-1)/4;
+    }
+
+    /* round to precision digits */
+    double frac = ldexp(m, 4*precision);
+    frac -= floor(frac);
+    frac *= 16.0;
+    m += ldexp(frac >= 8.0, -4*precision);
+
+    /* Space for precision + 1 digits, sign, 0x prefix, a decimal
+       point, the trailing NUL byte and an exponent. */
+    char *s = PyMem_Malloc(precision + DBL_MAX_EXP + 7);
+
+    /* sign and prefix */
+    si = 0;
+    if (copysign(1.0, x) == -1.0) {
+        s[si] = '-';
+        si++;
+    }
+    else if (always_add_sign) {
+        s[si] = '+';
+        si++;
+    }
+    s[si] = '0';
+    si++;
+    s[si] = upper ? 'X' : 'x';
+    si++;
+
+    /* mantissa */
+    s[si] = char_from_hex((int)m, upper);
+    si++;
+    m -= (int)m;
+    s[si] = '.';
+    for (i=0; i < precision; i++) {
+        si++;
+        m *= 16.0;
+        s[si] = char_from_hex((int)m, upper);
+        m -= (int)m;
+    }
+
+    /* clear trailing zeros from mantissa */
+    while (s[si] == '0') {
+        si--;
+    }
+    if (s[si] != '.' || use_alt_formatting) {
+        si++;
+    }
+
+    /* exponent */
+    s[si] = upper ? 'P' : 'p';
+    si++;
+    i = snprintf(s+si, DBL_MAX_EXP+1, "%+d", e);
+    si += i+1;
+
+    return PyMem_Realloc(s, si);
+}
+
 /* I'm using a lookup table here so that I don't have to invent a non-locale
    specific way to convert to uppercase */
 #define OFS_INF 0
@@ -973,6 +1072,13 @@ format_float_short(double d, char format_code,
     char *digits, *digits_end;
     int decpt_as_int, sign, exp_len, exp = 0, use_exp = 0;
     Py_ssize_t decpt, digits_len, vdigits_start, vdigits_end;
+
+    if (format_code == 'a' && Py_IS_FINITE(d)) {
+        return _Py_dg_dtoa_hex(d, precision, always_add_sign,
+                               use_alt_formatting,
+                               float_strings == uc_float_strings);
+    }
+
     _Py_SET_53BIT_PRECISION_HEADER;
 
     /* _Py_dg_dtoa returns a digit string (no decimal point or exponent).
@@ -1225,6 +1331,13 @@ char * PyOS_double_to_string(double val,
     /* Validate format_code, and map upper and lower case. Compute the
        mode and make any adjustments as needed. */
     switch (format_code) {
+    case 'A':
+        float_strings = uc_float_strings;
+        /* Fall through. */
+    case 'a':
+        format_code = 'a';
+        mode = 2;
+        break;
     /* exponent */
     case 'E':
         float_strings = uc_float_strings;
