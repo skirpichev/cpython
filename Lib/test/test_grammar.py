@@ -210,7 +210,7 @@ class TokenTests(unittest.TestCase):
               "use an 0o prefix for octal integers")
         check("1.2_", "invalid decimal literal")
         check("1e2_", "invalid decimal literal")
-        check("1e+", "invalid decimal literal")
+        check("1e+", "invalid floating point literal")
 
     def test_end_of_numerical_literals(self):
         def check(test, error=False):
@@ -218,12 +218,12 @@ class TokenTests(unittest.TestCase):
                 if error:
                     with warnings.catch_warnings(record=True) as w:
                         with self.assertRaisesRegex(SyntaxError,
-                                    r'invalid \w+ literal'):
+                                    r'invalid [ \w]+ literal'):
                             compile(test, "<testcase>", "eval")
                     self.assertEqual(w,  [])
                 else:
                     self.check_syntax_warning(test,
-                            errtext=r'invalid \w+ literal')
+                            errtext=r'invalid [ \w]+ literal')
 
         for num in "0xf", "0o7", "0b1", "9", "0", "1.", "1e3", "1j":
             compile(num, "<testcase>", "eval")

@@ -753,6 +753,7 @@ tok_get_normal_mode(struct tok_state *tok, tokenizer_mode* current_tok, struct t
             /* Hex, octal or binary -- maybe. */
             c = tok_nextc(tok);
             if (c == 'x' || c == 'X') {
+                int got_frac = 0;
                 /* Hex */
                 c = tok_nextc(tok);
                 do {
@@ -760,13 +761,56 @@ tok_get_normal_mode(struct tok_state *tok, tokenizer_mode* current_tok, struct t
                         c = tok_nextc(tok);
                     }
                     if (!Py_ISXDIGIT(c)) {
+                        if (c == '.') {
+                            goto hex_fraction;
+                        }
+                        if (got_frac) {
+                            if (c == 'p' || c == 'P') {
+                                goto exponent;
+                            }
+                            if (c == 'j' || c == 'J') {
+                                goto imaginary;
+                            }
+                        }
                         tok_backup(tok, c);
                         return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid hexadecimal literal"));
                     }
+                    got_frac = 1;
                     do {
                         c = tok_nextc(tok);
                     } while (Py_ISXDIGIT(c));
                 } while (c == '_');
+                if (c == '.') {
+                  hex_fraction:
+                    c = tok_nextc(tok);
+                    if (Py_ISXDIGIT(c)) {
+                        got_frac = 1;
+                        while (1) {
+                            do {
+                                c = tok_nextc(tok);
+                            } while (Py_ISXDIGIT(c));
+                            if (c != '_') {
+                                break;
+                            }
+                            c = tok_nextc(tok);
+                            if (!Py_ISXDIGIT(c)) {
+                                tok_backup(tok, c);
+                                _PyTokenizer_syntaxerror(tok, "invalid floating point literal");
+                                return MAKE_TOKEN(ERRORTOKEN);
+                            }
+                        }
+                    }
+                }
+                if (!got_frac) {
+                    tok_backup(tok, c);
+                    return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid floating point literal"));
+                }
+                if (c == 'p' || c == 'P') {
+                    goto exponent;
+                }
+                if (c == 'j' || c == 'J') {
+                    goto imaginary;
+                }
                 if (!verify_end_of_number(tok, c, "hexadecimal")) {
                     return MAKE_TOKEN(ERRORTOKEN);
                 }
@@ -906,11 +950,11 @@ tok_get_normal_mode(struct tok_state *tok, tokenizer_mode* current_tok, struct t
                         c = tok_nextc(tok);
                         if (!Py_ISDIGIT(c)) {
                             tok_backup(tok, c);
-                            return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid decimal literal"));
+                            return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid floating point literal"));
                         }
                     } else if (!Py_ISDIGIT(c)) {
                         tok_backup(tok, c);
-                        if (!verify_end_of_number(tok, e, "decimal")) {
+                        if (!verify_end_of_number(tok, e, "floating point")) {
                             return MAKE_TOKEN(ERRORTOKEN);
                         }
                         tok_backup(tok, e);
