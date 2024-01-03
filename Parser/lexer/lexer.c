@@ -782,6 +782,38 @@ tok_get_normal_mode(struct tok_state *tok, tokenizer_mode* current_tok, struct t
                 } while (c == '_');
                 if (c == '.') {
                   hex_fraction:
+                    {
+                        int r = 0;
+                        c = tok_nextc(tok);
+                        if (c == 'a') {
+                            r = lookahead(tok, "s_integer_ratio");
+                        }
+                        else if (c == 'b') {
+                            r = lookahead(tok, "it_count");
+                            if (!r) {
+                                r = lookahead(tok, "it_length");
+                            }
+                        }
+                        else if (c == 'c') {
+                            r = lookahead(tok, "onjugate");
+                        }
+                        else if (c == 'd') {
+                            r = lookahead(tok, "enominator");
+                        }
+                        else if (c == 'f') {
+                            r = lookahead(tok, "rom_bytes");
+                        }
+                        if (r) {
+                            if (_PyTokenizer_parser_warn(tok, PyExc_SyntaxWarning, "invalid hexadecimal literal")) {
+                                return MAKE_TOKEN(ERRORTOKEN);
+                            }
+                            tok_backup(tok, c);
+                            c = '.';
+                            goto hexint;
+                        }
+                        tok_backup(tok, c);
+                        c = '.';
+                    }
                     c = tok_nextc(tok);
                     if (Py_ISXDIGIT(c)) {
                         got_frac = 1;
@@ -811,6 +843,7 @@ tok_get_normal_mode(struct tok_state *tok, tokenizer_mode* current_tok, struct t
                 if (c == 'j' || c == 'J') {
                     goto imaginary;
                 }
+              hexint:
                 if (!verify_end_of_number(tok, c, "hexadecimal")) {
                     return MAKE_TOKEN(ERRORTOKEN);
                 }
