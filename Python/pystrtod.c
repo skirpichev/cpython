@@ -949,6 +949,7 @@ _Py_dg_dtoa_hex(double x, int precision, int always_add_sign,
     double m = frexp(fabs(x), &e);
 
     if (m || e) {
+        /* normalization XXX: valid after rounding? */
         shift = 1 - Py_MAX(DBL_MIN_EXP - e, 0);
         m = ldexp(m, shift);
         e -= shift;
