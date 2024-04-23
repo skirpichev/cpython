@@ -22,6 +22,9 @@ class BadComplex3:
     def __complex__(self):
         raise RuntimeError
 
+class ImaginarySubclass(imaginary):
+    pass
+
 
 class CAPIComplexTest(unittest.TestCase):
     def test_check(self):
@@ -228,7 +231,6 @@ class CAPIComplexTest(unittest.TestCase):
         self.assertEqual(_py_c_pow(0j, 1j)[1], errno.EDOM)
         self.assertEqual(_py_c_pow(*[DBL_MAX+1j]*2)[0], complex(*[INF]*2))
 
-
     def test_py_c_abs(self):
         # Test _Py_c_abs()
         _py_c_abs = _testcapi._py_c_abs
@@ -245,6 +247,42 @@ class CAPIComplexTest(unittest.TestCase):
         self.assertTrue(isnan(_py_c_abs(complex('nan-1j'))[0]))
 
         self.assertEqual(_py_c_abs(complex(*[DBL_MAX]*2))[1], errno.ERANGE)
+
+
+class CAPIImaginaryTest(unittest.TestCase):
+    def test_check(self):
+        # Test PyImaginary_Check()
+        check = _testlimitedcapi.imaginary_check
+
+        self.assertTrue(check(2j))
+        self.assertTrue(check(ImaginarySubclass(2)))
+        self.assertFalse(check(ComplexSubclass(1+2j)))
+        self.assertFalse(check(Complex()))
+        self.assertFalse(check(3))
+        self.assertFalse(check(3.0))
+        self.assertFalse(check(object()))
+
+        # CRASHES check(NULL)
+
+    def test_checkexact(self):
+        # PyImaginary_CheckExact()
+        checkexact = _testlimitedcapi.imaginary_checkexact
+
+        self.assertTrue(checkexact(2j))
+        self.assertFalse(checkexact(ImaginarySubclass(2)))
+        self.assertFalse(checkexact(ComplexSubclass(1+2j)))
+        self.assertFalse(checkexact(Complex()))
+        self.assertFalse(checkexact(3))
+        self.assertFalse(checkexact(3.0))
+        self.assertFalse(checkexact(object()))
+
+        # CRASHES checkexact(NULL)
+
+    def test_fromdouble(self):
+        # Test PyImaginary_FromDouble()
+        fromdouble = _testlimitedcapi.imaginary_fromdouble
+
+        self.assertEqual(fromdouble(2.0), 2.0j)
 
 
 if __name__ == "__main__":

@@ -17,6 +17,20 @@ complex_checkexact(PyObject *Py_UNUSED(module), PyObject *obj)
 }
 
 static PyObject *
+imaginary_check(PyObject *Py_UNUSED(module), PyObject *obj)
+{
+    NULLABLE(obj);
+    return PyLong_FromLong(PyImaginary_Check(obj));
+}
+
+static PyObject *
+imaginary_checkexact(PyObject *Py_UNUSED(module), PyObject *obj)
+{
+    NULLABLE(obj);
+    return PyLong_FromLong(PyImaginary_CheckExact(obj));
+}
+
+static PyObject *
 complex_fromdoubles(PyObject *Py_UNUSED(module), PyObject *args)
 {
     double real, imag;
@@ -26,6 +40,12 @@ complex_fromdoubles(PyObject *Py_UNUSED(module), PyObject *args)
     }
 
     return PyComplex_FromDoubles(real, imag);
+}
+
+static PyObject *
+imaginary_fromdouble(PyObject *Py_UNUSED(module), PyObject *obj)
+{
+    return PyImaginary_FromDouble(PyFloat_AsDouble(obj));
 }
 
 static PyObject *
@@ -65,6 +85,9 @@ static PyMethodDef test_methods[] = {
     {"complex_fromdoubles", complex_fromdoubles, METH_VARARGS},
     {"complex_realasdouble", complex_realasdouble, METH_O},
     {"complex_imagasdouble", complex_imagasdouble, METH_O},
+    {"imaginary_check", imaginary_check, METH_O},
+    {"imaginary_checkexact", imaginary_checkexact, METH_O},
+    {"imaginary_fromdouble", imaginary_fromdouble, METH_O},
     {NULL},
 };
 

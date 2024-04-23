@@ -24,17 +24,17 @@ the function is then applied to the result of the conversion.
    imaginary axis we look at the sign of the real part.
 
    For example, the :func:`cmath.sqrt` function has a branch cut along the
-   negative real axis. An argument of ``complex(-2.0, -0.0)`` is treated as
+   negative real axis. An argument of ``-2-0j`` is treated as
    though it lies *below* the branch cut, and so gives a result on the negative
    imaginary axis::
 
-      >>> cmath.sqrt(complex(-2.0, -0.0))
+      >>> cmath.sqrt(-2-0j)
       -1.4142135623730951j
 
-   But an argument of ``complex(-2.0, 0.0)`` is treated as though it lies above
+   But an argument of ``-2+0j`` is treated as though it lies above
    the branch cut::
 
-      >>> cmath.sqrt(complex(-2.0, 0.0))
+      >>> cmath.sqrt(-2+0j)
       1.4142135623730951j
 
 
@@ -63,9 +63,9 @@ rectangular coordinates to polar coordinates and back.
    along the negative real axis.  The sign of the result is the same as the
    sign of ``x.imag``, even when ``x.imag`` is zero::
 
-      >>> phase(complex(-1.0, 0.0))
+      >>> phase(-1+0j)
       3.141592653589793
-      >>> phase(complex(-1.0, -0.0))
+      >>> phase(-1-0j)
       -3.141592653589793
 
 
@@ -277,7 +277,7 @@ Constants
 .. data:: infj
 
    Complex number with zero real part and positive infinity imaginary
-   part. Equivalent to ``complex(0.0, float('inf'))``.
+   part. Equivalent to ``float('inf')*1j``.
 
    .. versionadded:: 3.6
 
@@ -293,7 +293,7 @@ Constants
 .. data:: nanj
 
    Complex number with zero real part and NaN imaginary part. Equivalent to
-   ``complex(0.0, float('nan'))``.
+   ``float('nan')*1j``.
 
    .. versionadded:: 3.6
 
