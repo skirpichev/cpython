@@ -17,8 +17,9 @@
 
 /*[clinic input]
 class complex "PyComplexObject *" "&PyComplex_Type"
+class imaginary "PyComplexObject *" "&PyComplex_Type"
 [clinic start generated code]*/
-/*[clinic end generated code: output=da39a3ee5e6b4b0d input=819e057d2d10f5ec]*/
+/*[clinic end generated code: output=da39a3ee5e6b4b0d input=041bba3f29a299d0]*/
 
 #include "clinic/complexobject.c.h"
 
@@ -518,7 +519,7 @@ complex_repr(PyComplexObject *v)
     const char *lead = "";
     const char *tail = "";
 
-    if (v->cval.real == 0. && copysign(1.0, v->cval.real)==1.0) {
+    if (PyImaginary_Check(v)) {
         /* Real part is +0: just output the imaginary part and do not
            include parens. */
         re = "";
@@ -532,7 +533,8 @@ complex_repr(PyComplexObject *v)
         /* Format imaginary part with sign, real part without. Include
            parens in the result. */
         pre = PyOS_double_to_string(v->cval.real, format_code,
-                                    precision, 0, NULL);
+                                    precision,
+                                    v->cval.real? 0 : Py_DTSF_ADD_DOT_0, NULL);
         if (!pre) {
             PyErr_NoMemory();
             goto done;
@@ -607,19 +609,29 @@ real_to_complex(PyObject **pobj, Py_complex *pc)
 }
 
 /* Complex arithmetic rules implement special mixed-mode case where combining
-   a pure-real (float or int) value and a complex value is performed directly
-   without first coercing the real value to a complex value.
+   a pure-real (float or int) value and a complex value or a pure-imaginary
+   value (instances of the imaginary type, like 1j) and a complex value are
+   performed directly, without first coercing operands to a complex value.
 
    Let us consider the addition as an example, assuming that ints are implicitly
    converted to floats.  We have the following rules (up to variants with changed
    order of operands):
 
-       complex(a, b) + complex(c, d) = complex(a + c, b + d)
-       float(a) + complex(b, c) = complex(a + b, c)
+       complex(a, b) + complex(c, d) = complex(a + c, b + d)   (1)
+       float(a) + complex(b, c) = complex(a + b, c)            (2)
+       imaginary(a) + complex(b, c) = complex(b, a + c)        (3)
+       imaginary(a) + imaginary(b) = imaginary(a + b)          (4)
+       float(a) + imaginary(b) = complex(a, b)                 (5)
 
    Similar rules are implemented for subtraction, multiplication and division.
    See C11's Annex G, sections G.5.1 and G.5.2.
- */
+
+   Note, that the imaginary type implemented as a subtype of the complex
+   type.  So, complex_op() functions below must implement only one type of
+   mixed-mode operations, i.e.  when one argument is a float (2).  The rest
+   (respectively: complex op imaginary (3), imaginary op imaginary (4) and
+   imaginary op float (5)) should be implemented by an appropriate
+   imaginary_op() function. */
 
 #define COMPLEX_BINOP(NAME, FUNC)                           \
     static PyObject *                                       \
@@ -1363,4 +1375,269 @@ PyTypeObject PyComplex_Type = {
     actual_complex_new,                         /* tp_new */
     PyObject_Free,                              /* tp_free */
     .tp_version_tag = _Py_TYPE_VERSION_COMPLEX,
+};
+
+/*[clinic input]
+@classmethod
+imaginary.__new__ as imaginary_new
+    x: object(c_default="NULL") = 0
+
+Create an imaginary number from a real number or string.
+
+This is equivalent of float(x)*1j.
+[clinic start generated code]*/
+
+static PyObject *
+imaginary_new_impl(PyTypeObject *type, PyObject *x)
+/*[clinic end generated code: output=07242ea06eb219f6 input=0ec29c2535687795]*/
+{
+    if (x == NULL) {
+        x = _PyLong_GetZero();
+    }
+
+    PyNumberMethods *nbx = Py_TYPE(x)->tp_as_number;
+
+    if (nbx == NULL || (nbx->nb_float == NULL && nbx->nb_index == NULL
+                        && !PyFloat_Check(x) && !PyUnicode_Check(x)))
+    {
+        PyErr_Format(PyExc_TypeError,
+                     "imaginary() first argument must be a real number, "
+                     "not '%.200s'", Py_TYPE(x)->tp_name);
+            return NULL;
+    }
+
+    PyObject* tmp = PyNumber_Float(x);
+
+    if (tmp == NULL) {
+        return NULL;
+    }
+
+    PyObject *ret = type->tp_alloc(type, 0);
+
+    if (ret != NULL) {
+        ((PyComplexObject *)ret)->cval = (Py_complex) {0.0, PyFloat_AS_DOUBLE(tmp)};
+    }
+    Py_DECREF(tmp);
+    return ret;
+}
+
+PyObject *
+PyImaginary_FromDouble(double imag)
+{
+    /* Inline PyObject_New */
+    PyComplexObject *op = PyObject_Malloc(sizeof(PyComplexObject));
+
+    if (op == NULL) {
+        return PyErr_NoMemory();
+    }
+    _PyObject_Init((PyObject*)op, &PyImaginary_Type);
+    op->cval = (Py_complex){0.0, imag};
+    return (PyObject *) op;
+}
+
+static PyObject *
+imaginary_neg(PyComplexObject *v)
+{
+    return PyImaginary_FromDouble(-v->cval.imag);
+}
+
+static PyObject *
+imaginary_pos(PyComplexObject *v)
+{
+    if (PyImaginary_CheckExact(v)) {
+        return Py_NewRef(v);
+    }
+    return PyImaginary_FromDouble(v->cval.imag);
+}
+
+/* Imaginary type arithmetic.  Binary operations below
+   must support also complex and float (or int) operands. */
+
+static PyObject *
+imaginary_add(PyObject *v, PyObject *w)
+{
+    if (!PyImaginary_Check(v)) {
+        PyObject *tmp = v;
+
+        v = w;
+        w = tmp;
+    }
+
+    double a = ((PyComplexObject *)(v))->cval.imag;
+    double b;
+
+    if (PyComplex_Check(w)) {
+        a += ((PyComplexObject *)(w))->cval.imag;
+        b = ((PyComplexObject *)(w))->cval.real;
+    }
+    else if (real_to_double(&w, &b) < 0) {
+        return w;
+    }
+    return PyComplex_FromDoubles(b, a);
+}
+
+static PyObject *
+imaginary_sub(PyObject *v, PyObject *w)
+{
+    if (PyImaginary_Check(w)) {
+        double b = -((PyComplexObject *)(w))->cval.imag;
+        double a;
+
+        if (PyImaginary_Check(v)) {
+            b += ((PyComplexObject *)(v))->cval.imag;
+            return PyImaginary_FromDouble(b);
+        }
+        if (PyComplex_Check(v)) {
+            a = ((PyComplexObject *)(v))->cval.real;
+            b += ((PyComplexObject *)(v))->cval.imag;
+        }
+        else if (real_to_double(&v, &a) < 0) {
+            return v;
+        }
+        return PyComplex_FromDoubles(a, b);
+    }
+
+    double a = ((PyComplexObject *)(v))->cval.imag;
+    double b;
+
+    if (PyComplex_Check(w)) {
+        a -= ((PyComplexObject *)(w))->cval.imag;
+        b = ((PyComplexObject *)(w))->cval.real;
+    }
+    else if (real_to_double(&w, &b) < 0) {
+        return w;
+    }
+    return PyComplex_FromDoubles(-b, a);
+}
+
+static PyObject *
+imaginary_mul(PyObject *v, PyObject *w)
+{
+    if (!PyImaginary_Check(v)) {
+        PyObject *tmp = v;
+
+        v = w;
+        w = tmp;
+    }
+
+    double a = ((PyComplexObject *)(v))->cval.imag;
+    double b;
+
+    if (PyComplex_Check(w)) {
+        b = -a * ((PyComplexObject *)(w))->cval.imag;
+        if (PyImaginary_Check(w)) {
+            return PyFloat_FromDouble(b);
+        }
+        a *= ((PyComplexObject *)(w))->cval.real;
+        return PyComplex_FromDoubles(b, a);
+    }
+    else if (real_to_double(&w, &b) < 0) {
+        return w;
+    }
+    return PyImaginary_FromDouble(a*b);
+}
+
+static PyObject *
+imaginary_div(PyObject *v, PyObject *w)
+{
+    if (PyImaginary_Check(w)) {
+        double b = ((PyComplexObject *)(w))->cval.imag;
+        double a;
+
+        if (b) {
+            if (PyImaginary_Check(v)) {
+                double a = ((PyComplexObject *)(v))->cval.imag;
+
+                return PyFloat_FromDouble(a/b);
+            }
+            if (PyComplex_Check(v)) {
+                Py_complex a = ((PyComplexObject *)(v))->cval;
+
+                return PyComplex_FromDoubles(a.imag/b, -a.real/b);
+            }
+            if (real_to_double(&v, &a) < 0) {
+                return v;
+            }
+            return PyImaginary_FromDouble(-a/b);
+        }
+    }
+    else {
+        double a = ((PyComplexObject *)(v))->cval.imag;
+        double b;
+
+        if (PyComplex_Check(w)) {
+            Py_complex b = ((PyComplexObject *)(w))->cval;
+
+            errno = 0;
+            b = _Py_rc_quot(a, b);
+            b = (Py_complex){-b.imag, b.real};
+            if (!errno) {
+                return PyComplex_FromDoubles(b.real, b.imag);
+            }
+        }
+        else if (real_to_double(&w, &b) < 0) {
+            return w;
+        }
+        else if (b) {
+            return PyImaginary_FromDouble(a/b);
+        }
+    }
+    PyErr_SetString(PyExc_ZeroDivisionError, "complex division by zero");
+    return NULL;
+}
+
+/*[clinic input]
+imaginary.conjugate
+
+Return the complex conjugate of its argument. (-4j).conjugate() == 4j.
+[clinic start generated code]*/
+
+static PyObject *
+imaginary_conjugate_impl(PyComplexObject *self)
+/*[clinic end generated code: output=247bb3742efd769d input=8dcd1c93a873c492]*/
+{
+    Py_complex c = self->cval;
+
+    c.imag = -c.imag;
+    return PyImaginary_FromDouble(c.imag);
+}
+
+/*[clinic input]
+imaginary.__getnewargs__
+
+[clinic start generated code]*/
+
+static PyObject *
+imaginary___getnewargs___impl(PyComplexObject *self)
+/*[clinic end generated code: output=a587156eda821f7d input=da4b7e53915987d5]*/
+{
+    Py_complex c = self->cval;
+
+    return Py_BuildValue("(d)", c.imag);
+}
+
+static PyMethodDef imaginary_methods[] = {
+    IMAGINARY_CONJUGATE_METHODDEF
+    IMAGINARY___GETNEWARGS___METHODDEF
+    {NULL}  /* sentinel */
+};
+
+static PyNumberMethods imaginary_as_number = {
+    .nb_add = (binaryfunc)imaginary_add,
+    .nb_subtract = (binaryfunc)imaginary_sub,
+    .nb_multiply = (binaryfunc)imaginary_mul,
+    .nb_true_divide = (binaryfunc)imaginary_div,
+    .nb_negative = (unaryfunc)imaginary_neg,
+    .nb_positive = (unaryfunc)imaginary_pos,
+};
+
+PyTypeObject PyImaginary_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "imaginary",
+    .tp_as_number = &imaginary_as_number,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc = imaginary_new__doc__,
+    .tp_base = &PyComplex_Type,
+    .tp_new = imaginary_new,
+    .tp_methods = imaginary_methods,
 };
