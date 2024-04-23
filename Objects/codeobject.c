@@ -2396,6 +2396,15 @@ _PyCode_ConstantKey(PyObject *op)
         else
             key = PyTuple_Pack(2, Py_TYPE(op), op);
     }
+    else if (PyImaginary_CheckExact(op)) {
+        double d = ((PyComplexObject *)(op))->cval.imag;
+        if (d == 0.0 && copysign(1.0, d) < 0.0) {
+            key = PyTuple_Pack(3, Py_TYPE(op), op, Py_None);
+        }
+        else {
+            key = PyTuple_Pack(2, Py_TYPE(op), op);
+        }
+    }
     else if (PyComplex_CheckExact(op)) {
         Py_complex z;
         int real_negzero, imag_negzero;
@@ -2586,6 +2595,11 @@ compare_constants(const void *key1, const void *key2) {
         Py_complex c1 = ((PyComplexObject *)op1)->cval;
         Py_complex c2 = ((PyComplexObject *)op2)->cval;
         return memcmp(&c1, &c2, sizeof(Py_complex)) == 0;
+    }
+    else if (PyImaginary_CheckExact(op1)) {
+        double i1 = ((PyComplexObject *)op1)->cval.imag;
+        double i2 = ((PyComplexObject *)op2)->cval.imag;
+        return memcmp(&i1, &i2, sizeof(double)) == 0;
     }
     _Py_FatalErrorFormat("unexpected type in compare_constants: %s",
                          Py_TYPE(op1)->tp_name);
