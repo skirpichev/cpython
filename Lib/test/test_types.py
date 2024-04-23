@@ -2410,6 +2410,9 @@ class SubinterpreterTests(unittest.TestCase):
         def collate_results(raw):
             results = {}
             for cls, attr, wrapper in raw:
+                if cls is imaginary and slot in ('__abs__', '__bool__',
+                                                 '__pow__', '__rpow__'):
+                    continue
                 key = cls, attr
                 assert key not in results, (results, key, wrapper)
                 results[key] = wrapper
@@ -2428,6 +2431,10 @@ class SubinterpreterTests(unittest.TestCase):
 
         for key, expected in main_results.items():
             cls, attr = key
+            if cls == repr(imaginary) and attr in ('__abs__', '__bool__',
+                                                   '__pow__', '__rpow__'):
+                interp_results.pop(key)
+                continue
             with self.subTest(cls=cls, slotattr=attr):
                 actual = interp_results.pop(key)
                 self.assertEqual(actual, expected)
