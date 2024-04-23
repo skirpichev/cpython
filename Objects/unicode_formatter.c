@@ -1608,7 +1608,7 @@ format_complex_internal(PyObject *value,
         /* Omitted type specifier. Should be like str(self). */
         type = 'r';
         default_precision = 0;
-        if (re == 0.0 && copysign(1.0, re) == 1.0)
+        if (PyImaginary_Check(value))
             skip_re = 1;
         else
             add_parens = 1;
@@ -1627,8 +1627,17 @@ format_complex_internal(PyObject *value,
     /* Cast "type", because if we're in unicode we need to pass an
        8-bit char. This is safe, because we've restricted what "type"
        can be. */
-    re_buf = PyOS_double_to_string(re, (char)type, precision, flags,
-                                   &re_float_type);
+    if (re == 0.0) {
+        if (PyImaginary_Check(value)) {
+            skip_re = 1;
+        }
+        re_buf = PyOS_double_to_string(re, (char)type, precision,
+                                       flags | Py_DTSF_ADD_DOT_0,
+                                       &re_float_type);
+    }
+    else
+        re_buf = PyOS_double_to_string(re, (char)type, precision, flags,
+                                       &re_float_type);
     if (re_buf == NULL)
         goto done;
     im_buf = PyOS_double_to_string(im, (char)type, precision, flags,

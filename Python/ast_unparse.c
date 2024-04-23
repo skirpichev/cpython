@@ -92,7 +92,7 @@ append_repr(PyUnicodeWriter *writer, PyObject *obj)
     }
 
     if ((PyFloat_CheckExact(obj) && isinf(PyFloat_AS_DOUBLE(obj))) ||
-        PyComplex_CheckExact(obj))
+        PyComplex_CheckExact(obj) || PyImaginary_CheckExact(obj))
     {
         _Py_DECLARE_STR(str_replace_inf, "1e309");  // evaluates to inf
         PyObject *new_repr = PyUnicode_Replace(

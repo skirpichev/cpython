@@ -24,6 +24,9 @@ class BadComplex3:
     def __complex__(self):
         raise RuntimeError
 
+class ImaginarySubclass(imaginary):
+    pass
+
 
 class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
     def test_check(self):
@@ -177,7 +180,14 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         # Test _Py_cr_sum()
         _py_cr_sum = _testinternalcapi._py_cr_sum
 
-        self.assertComplexesAreIdentical(_py_cr_sum(-0j, -0.0)[0],
+        self.assertComplexesAreIdentical(_py_cr_sum(-0.0 - 0j, -0.0)[0],
+                                         complex(-0.0, -0.0))
+
+    def test_py_ci_sum(self):
+        # Test _Py_cr_sum()
+        _py_ci_sum = _testinternalcapi._py_ci_sum
+
+        self.assertComplexesAreIdentical(_py_ci_sum(-0.0 - 0j, -0.0)[0],
                                          complex(-0.0, -0.0))
 
     def test_py_c_diff(self):
@@ -190,7 +200,14 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         # Test _Py_cr_diff()
         _py_cr_diff = _testinternalcapi._py_cr_diff
 
-        self.assertComplexesAreIdentical(_py_cr_diff(-0j, 0.0)[0],
+        self.assertComplexesAreIdentical(_py_cr_diff(-0.0 - 0j, 0.0)[0],
+                                         complex(-0.0, -0.0))
+
+    def test_py_ci_diff(self):
+        # Test _Py_ci_diff()
+        _py_ci_diff = _testinternalcapi._py_ci_diff
+
+        self.assertComplexesAreIdentical(_py_ci_diff(-0.0 - 0j, 0.0)[0],
                                          complex(-0.0, -0.0))
 
     def test_py_rc_diff(self):
@@ -198,6 +215,13 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         _py_rc_diff = _testinternalcapi._py_rc_diff
 
         self.assertComplexesAreIdentical(_py_rc_diff(-0.0, 0j)[0],
+                                         complex(-0.0, -0.0))
+
+    def test_py_ic_diff(self):
+        # Test _Py_ic_diff()
+        _py_ic_diff = _testinternalcapi._py_ic_diff
+
+        self.assertComplexesAreIdentical(_py_ic_diff(-0.0, 0j)[0],
                                          complex(-0.0, -0.0))
 
     def test_py_c_neg(self):
@@ -218,6 +242,13 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
 
         self.assertComplexesAreIdentical(_py_cr_prod(complex('inf+1j'), INF)[0],
                                                      complex('inf+infj'))
+
+    def test_py_ci_prod(self):
+        # Test _Py_ci_prod()
+        _py_ci_prod = _testinternalcapi._py_ci_prod
+
+        self.assertComplexesAreIdentical(_py_ci_prod(complex('inf+1j'), INF)[0],
+                                                     complex('-inf+infj'))
 
     def test_py_c_quot(self):
         # Test _Py_c_quot()
@@ -248,12 +279,26 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         self.assertComplexesAreIdentical(_py_cr_quot(complex('inf+1j'), 2**1000)[0],
                                          INF + 2**-1000*1j)
 
+    def test_py_ci_quot(self):
+        # Test _Py_ci_quot()
+        _py_ci_quot = _testinternalcapi._py_ci_quot
+
+        self.assertComplexesAreIdentical(_py_ci_quot(complex('1+infj'), 2**1000)[0],
+                                         INF - 2**-1000*1j)
+
     def test_py_rc_quot(self):
         # Test _Py_rc_quot()
         _py_rc_quot = _testinternalcapi._py_rc_quot
 
         self.assertComplexesAreIdentical(_py_rc_quot(1.0, complex('nan-infj'))[0],
                                          0j)
+
+    def test_py_ic_quot(self):
+        # Test _Py_ic_quot()
+        _py_ic_quot = _testinternalcapi._py_ic_quot
+
+        self.assertComplexesAreIdentical(_py_ic_quot(1.0, complex('inf-nanj'))[0],
+                                         -0.0)
 
     def test_py_c_pow(self):
         # Test _Py_c_pow()
@@ -276,7 +321,6 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         self.assertEqual(_py_c_pow(max_num, 2),
                          (complex(INF, INF), errno.ERANGE))
 
-
     def test_py_c_abs(self):
         # Test _Py_c_abs()
         _py_c_abs = _testcapi._py_c_abs
@@ -293,6 +337,42 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         self.assertTrue(isnan(_py_c_abs(complex('nan-1j'))[0]))
 
         self.assertEqual(_py_c_abs(complex(*[DBL_MAX]*2))[1], errno.ERANGE)
+
+
+class CAPIImaginaryTest(unittest.TestCase):
+    def test_check(self):
+        # Test PyImaginary_Check()
+        check = _testlimitedcapi.imaginary_check
+
+        self.assertTrue(check(2j))
+        self.assertTrue(check(ImaginarySubclass(2)))
+        self.assertFalse(check(ComplexSubclass(1+2j)))
+        self.assertFalse(check(Complex()))
+        self.assertFalse(check(3))
+        self.assertFalse(check(3.0))
+        self.assertFalse(check(object()))
+
+        # CRASHES check(NULL)
+
+    def test_checkexact(self):
+        # PyImaginary_CheckExact()
+        checkexact = _testlimitedcapi.imaginary_checkexact
+
+        self.assertTrue(checkexact(2j))
+        self.assertFalse(checkexact(ImaginarySubclass(2)))
+        self.assertFalse(checkexact(ComplexSubclass(1+2j)))
+        self.assertFalse(checkexact(Complex()))
+        self.assertFalse(checkexact(3))
+        self.assertFalse(checkexact(3.0))
+        self.assertFalse(checkexact(object()))
+
+        # CRASHES checkexact(NULL)
+
+    def test_fromdouble(self):
+        # Test PyImaginary_FromDouble()
+        fromdouble = _testlimitedcapi.imaginary_fromdouble
+
+        self.assertEqual(fromdouble(2.0), 2.0j)
 
 
 if __name__ == "__main__":

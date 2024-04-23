@@ -1582,12 +1582,12 @@ class StrTest(string_tests.StringLikeTest,
         self.assertRaisesRegex(TypeError, '%X format: an integer is required, not float', operator.mod, '%X', 2.11)
         self.assertRaisesRegex(TypeError, '%o format: an integer is required, not float', operator.mod, '%o', 1.79)
         self.assertRaisesRegex(TypeError, '%x format: an integer is required, not PseudoFloat', operator.mod, '%x', pi)
-        self.assertRaisesRegex(TypeError, '%x format: an integer is required, not complex', operator.mod, '%x', 3j)
-        self.assertRaisesRegex(TypeError, '%X format: an integer is required, not complex', operator.mod, '%X', 2j)
-        self.assertRaisesRegex(TypeError, '%o format: an integer is required, not complex', operator.mod, '%o', 1j)
-        self.assertRaisesRegex(TypeError, '%u format: a real number is required, not complex', operator.mod, '%u', 3j)
-        self.assertRaisesRegex(TypeError, '%i format: a real number is required, not complex', operator.mod, '%i', 2j)
-        self.assertRaisesRegex(TypeError, '%d format: a real number is required, not complex', operator.mod, '%d', 1j)
+        self.assertRaisesRegex(TypeError, '%x format: an integer is required, not complex', operator.mod, '%x', 1+3j)
+        self.assertRaisesRegex(TypeError, '%X format: an integer is required, not complex', operator.mod, '%X', 1+2j)
+        self.assertRaisesRegex(TypeError, '%o format: an integer is required, not complex', operator.mod, '%o', 1+1j)
+        self.assertRaisesRegex(TypeError, '%u format: a real number is required, not complex', operator.mod, '%u', 1+3j)
+        self.assertRaisesRegex(TypeError, '%i format: a real number is required, not complex', operator.mod, '%i', 1+2j)
+        self.assertRaisesRegex(TypeError, '%d format: a real number is required, not complex', operator.mod, '%d', 1+1j)
         self.assertRaisesRegex(TypeError, r'%c requires an int or a unicode character, not .*\.PseudoFloat', operator.mod, '%c', pi)
 
         class RaisingNumber:

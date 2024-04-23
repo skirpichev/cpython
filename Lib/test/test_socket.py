@@ -988,7 +988,7 @@ class GeneralModuleTests(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          "a bytes-like object is required, not 'str'")
         with self.assertRaises(TypeError) as cm:
-            s.sendto(5j, sockname)
+            s.sendto(1+5j, sockname)
         self.assertEqual(str(cm.exception),
                          "a bytes-like object is required, not 'complex'")
         with self.assertRaises(TypeError) as cm:
@@ -1000,7 +1000,7 @@ class GeneralModuleTests(unittest.TestCase):
         self.assertEqual(str(cm.exception),
                          "a bytes-like object is required, not 'str'")
         with self.assertRaises(TypeError) as cm:
-            s.sendto(5j, 0, sockname)
+            s.sendto(1+5j, 0, sockname)
         self.assertEqual(str(cm.exception),
                          "a bytes-like object is required, not 'complex'")
         with self.assertRaises(TypeError) as cm:
