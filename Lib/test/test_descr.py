@@ -2099,7 +2099,7 @@ class ClassPropertiesAndMethods(unittest.TestCase):
         def zero(self):
             return 0
         def complex_num(self):
-            return 1j
+            return 1+1j
         def stop(self):
             raise StopIteration
         def return_true(self, thing=None):
