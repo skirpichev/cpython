@@ -474,8 +474,8 @@ complex_repr(PyComplexObject *v)
     } else {
         /* Format imaginary part with sign, real part without. Include
            parens in the result. */
-        pre = PyOS_double_to_string(v->cval.real, format_code,
-                                    precision, 0, NULL);
+        pre = PyOS_double_to_string(v->cval.real, format_code, precision,
+                                    v->cval.real? 0 : Py_DTSF_ADD_DOT_0, NULL);
         if (!pre) {
             PyErr_NoMemory();
             goto done;
