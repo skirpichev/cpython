@@ -861,14 +861,14 @@ class ComplexTest(unittest.TestCase):
             test_fn(str(v), expected)
 
         test(complex(0., 1.),   "1j")
-        test(complex(-0., 1.),  "(-0+1j)")
+        test(complex(-0., 1.),  "(-0.0+1j)")
         test(complex(0., -1.),  "-1j")
-        test(complex(-0., -1.), "(-0-1j)")
+        test(complex(-0., -1.), "(-0.0-1j)")
 
         test(complex(0., 0.),   "0j")
         test(complex(0., -0.),  "-0j")
-        test(complex(-0., 0.),  "(-0+0j)")
-        test(complex(-0., -0.), "(-0-0j)")
+        test(complex(-0., 0.),  "(-0.0+0j)")
+        test(complex(-0., -0.), "(-0.0-0j)")
 
     def test_pos(self):
         self.assertEqual(+(1+6j), 1+6j)
