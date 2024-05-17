@@ -389,7 +389,7 @@ are always available.  They are listed here in alphabetical order.
       >>> complex('+1.23')
       (1.23+0j)
       >>> complex('-4.5j')
-      -4.5j
+      (0.0-4.5j)
       >>> complex('-1.23+4.5j')
       (-1.23+4.5j)
       >>> complex('\t( -1.23+4.5J )\n')
@@ -399,7 +399,7 @@ are always available.  They are listed here in alphabetical order.
       >>> complex(1.23)
       (1.23+0j)
       >>> complex(imag=-4.5)
-      -4.5j
+      (0.0-4.5j)
       >>> complex(-1.23, 4.5)
       (-1.23+4.5j)
 

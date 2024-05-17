@@ -819,9 +819,13 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         test(complex(NAN, NAN), "(nan+nanj)")
         test(complex(-NAN, -NAN), "(nan+nanj)")
 
-        test(complex(0, INF), "infj")
-        test(complex(0, -INF), "-infj")
-        test(complex(0, NAN), "nanj")
+        test(complex(0, INF), "(0.0+infj)")
+        test(complex(0, -INF), "(0.0-infj)")
+        test(complex(0, NAN), "(0.0+nanj)")
+
+        test(imaginary(INF), "infj")
+        test(imaginary(-INF), "-infj")
+        test(imaginary(NAN), "nanj")
 
         self.assertEqual(1-6j,complex(repr(1-6j)))
         self.assertEqual(1+6j,complex(repr(1+6j)))
@@ -834,15 +838,21 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
             test_fn(repr(v), expected)
             test_fn(str(v), expected)
 
-        test(complex(0., 1.),   "1j")
+        test(complex(0., 1.),   "(0.0+1j)")
         test(complex(-0., 1.),  "(-0.0+1j)")
-        test(complex(0., -1.),  "-1j")
+        test(complex(0., -1.),  "(0.0-1j)")
         test(complex(-0., -1.), "(-0.0-1j)")
 
-        test(complex(0., 0.),   "0j")
-        test(complex(0., -0.),  "-0j")
+        test(imaginary(+1.), "1j")
+        test(imaginary(-1.), "-1j")
+
+        test(complex(0., 0.),   "(0.0+0j)")
+        test(complex(0., -0.),  "(0.0-0j)")
         test(complex(-0., 0.),  "(-0.0+0j)")
         test(complex(-0., -0.), "(-0.0-0j)")
+
+        test(imaginary(+0.0), "0j")
+        test(imaginary(-0.0), "-0j")
 
     def test_pos(self):
         self.assertEqual(+(1+6j), 1+6j)
@@ -950,7 +960,8 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         self.assertEqual(format(z, '3'), str(z))
 
         self.assertEqual(format(1+3j, 'g'), '1+3j')
-        self.assertEqual(format(3j, 'g'), '0+3j')
+        self.assertEqual(format(0+3j, 'g'), '0.0+3j')
+        self.assertEqual(format(3j, 'g'), '3j')
         self.assertEqual(format(1.5+3.5j, 'g'), '1.5+3.5j')
 
         self.assertEqual(format(1.5+3.5j, '+g'), '+1.5+3.5j')
