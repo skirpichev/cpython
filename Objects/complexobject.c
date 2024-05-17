@@ -461,9 +461,8 @@ complex_repr(PyComplexObject *v)
     const char *lead = "";
     const char *tail = "";
 
-    if (v->cval.real == 0. && copysign(1.0, v->cval.real)==1.0) {
-        /* Real part is +0: just output the imaginary part and do not
-           include parens. */
+    if (PyImaginary_Check(v)) {
+        /* Just output the imaginary part and do not include parens. */
         re = "";
         im = PyOS_double_to_string(v->cval.imag, format_code,
                                    precision, 0, NULL);
