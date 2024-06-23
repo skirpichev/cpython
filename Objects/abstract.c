@@ -905,7 +905,7 @@ PyNumber_Check(PyObject *o)
     if (o == NULL)
         return 0;
     PyNumberMethods *nb = Py_TYPE(o)->tp_as_number;
-    return nb && (nb->nb_index || nb->nb_int || nb->nb_float || PyComplex_Check(o));
+    return nb && (nb->nb_index || nb->nb_int || nb->nb_float || nb->nb_complex);
 }
 
 /* Binary operators */
