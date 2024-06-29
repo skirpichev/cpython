@@ -78,7 +78,7 @@ append_repr(_PyUnicodeWriter *writer, PyObject *obj)
     }
 
     if ((PyFloat_CheckExact(obj) && isinf(PyFloat_AS_DOUBLE(obj))) ||
-       PyComplex_CheckExact(obj))
+       PyComplex_CheckExact(obj) || PyImaginary_CheckExact(obj))
     {
         PyInterpreterState *interp = _PyInterpreterState_GET();
         PyObject *new_repr = PyUnicode_Replace(
