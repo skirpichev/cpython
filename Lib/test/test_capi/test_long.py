@@ -744,6 +744,50 @@ class LongTests(unittest.TestCase):
 
         # CRASHES getsign(NULL)
 
+    def test_long_layout(self):
+        # Test PyLong_LAYOUT
+        int_info = sys.int_info
+        layout = _testcapi.get_pylong_layout()
+        expected = {
+            'array_endian': 0,
+            'bits_per_digit': int_info.bits_per_digit,
+            'digit_size': int_info.sizeof_digit,
+            'word_endian': 1 if sys.byteorder == 'little' else 0,
+        }
+        self.assertEqual(layout, expected)
+
+    def test_long_export(self):
+        # Test PyLong_Export()
+        layout = _testcapi.get_pylong_layout()
+        shift = 2 ** layout['bits_per_digit']
+
+        pylong_export = _testcapi.pylong_export
+        self.assertEqual(pylong_export(0), (0, [0]))
+        self.assertEqual(pylong_export(123), (0, [123]))
+        self.assertEqual(pylong_export(-123), (1, [123]))
+        self.assertEqual(pylong_export(shift**2 * 3 + shift * 2 + 1),
+                         (0, [1, 2, 3]))
+
+    def test_long_import(self):
+        # Test PyLong_Import()
+        layout = _testcapi.get_pylong_layout()
+        shift = 2 ** layout['bits_per_digit']
+
+        pylong_import = _testcapi.pylong_import
+        self.assertEqual(pylong_import(0, [0]), 0)
+        self.assertEqual(pylong_import(0, [123]), 123)
+        self.assertEqual(pylong_import(1, [123]), -123)
+        self.assertEqual(pylong_import(0, [1, 2, 3]),
+                         shift**2 * 3 + shift * 2 + 1)
+
+        # round trip: Python int -> export -> Python int
+        pylong_export = _testcapi.pylong_export
+        numbers = [*range(0, 10), 12345, 0xdeadbeef, 2**100, 2**100-1]
+        numbers.extend(-num for num in list(numbers))
+        for num in numbers:
+            with self.subTest(num=num):
+                export = pylong_export(num)
+                self.assertEqual(pylong_import(*export), num, export)
 
 if __name__ == "__main__":
     unittest.main()

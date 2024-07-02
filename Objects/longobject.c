@@ -6685,3 +6685,43 @@ Py_ssize_t
 PyUnstable_Long_CompactValue(const PyLongObject* op) {
     return _PyLong_CompactValue((PyLongObject*)op);
 }
+
+const PyUnstable_LongLayout PyUnstable_Long_LAYOUT = {
+    .bits_per_digit = PyLong_SHIFT,
+    .word_endian = PY_LITTLE_ENDIAN,
+    .array_endian = 0,  // least significant first
+    .digit_size = sizeof(digit),
+};
+
+
+PyObject*
+PyUnstable_Long_Import(int negative, size_t ndigits, Py_digit *digits)
+{
+    return (PyObject*)_PyLong_FromDigits(negative, ndigits, digits);
+}
+
+
+int
+PyUnstable_Long_Export(PyLongObject *obj, PyUnstable_LongExport *export)
+{
+    assert(PyLong_Check(obj));
+
+    export->obj = (PyLongObject*)Py_NewRef(obj);
+    export->negative = _PyLong_IsNegative(obj);
+    export->ndigits = _PyLong_DigitCount(obj);
+    if (export->ndigits == 0) {
+        export->ndigits = 1;
+    }
+    export->digits = obj->long_value.ob_digit;
+    return 0;
+}
+
+
+void
+PyUnstable_Long_ReleaseExport(PyUnstable_LongExport *export)
+{
+    Py_CLEAR(export->obj);
+    export->negative = 0;
+    export->ndigits = 0;
+    export->digits = NULL;
+}

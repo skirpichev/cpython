@@ -529,6 +529,9 @@ distinguished from a number.  Use :c:func:`PyErr_Occurred` to disambiguate.
    Exactly what values are considered compact is an implementation detail
    and is subject to change.
 
+   .. versionadded:: 3.12
+
+
 .. c:function:: Py_ssize_t PyUnstable_Long_CompactValue(const PyLongObject* op)
 
    If *op* is compact, as determined by :c:func:`PyUnstable_Long_IsCompact`,
@@ -536,3 +539,108 @@ distinguished from a number.  Use :c:func:`PyErr_Occurred` to disambiguate.
 
    Otherwise, the return value is undefined.
 
+   .. versionadded:: 3.12
+
+
+Import/Export API
+^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.14
+
+.. c:type:: Py_digit
+
+   A single unsigned digit.
+
+   It is usually used in an *array of digits*, such as the
+   :c:member:`PyUnstable_LongExport.digits` array.
+
+   Its size depend on the :c:macro:`PYLONG_BITS_IN_DIGIT` macro:
+   see the ``configure`` :option:`--enable-big-digits` option.
+
+   See :c:member:`PyUnstable_Long_LAYOUT.bits_per_digit` for the number of bits per
+   digit and :c:member:`PyUnstable_Long_LAYOUT.digit_size` for the size of a digit (in
+   bytes).
+
+
+.. c:struct:: PyUnstable_Long_LAYOUT
+
+   Internal layout of a Python :class:`int` object.
+
+   See also :attr:`sys.int_info` which exposes similar information to Python.
+
+   .. c:member:: uint8_t bits_per_digit;
+
+      Bits per digit.
+
+   .. c:member:: uint8_t digit_size;
+
+      Digit size in bytes.
+
+   .. c:member:: int8_t word_endian;
+
+      Word endian:
+
+      - 1 for most significant byte first (big endian)
+      - 0 for least significant first (little endian)
+
+   .. c:member:: int8_t array_endian;
+
+      Array endian:
+
+      - 1 for most significant byte first (big endian)
+      - 0 for least significant first (little endian)
+
+
+.. c:function:: PyObject* PyUnstable_Long_Import(int negative, size_t ndigits, Py_digit *digits)
+
+   Create a Python :class:`int` object from an array of digits.
+
+   * Return a Python :class:`int` object on success.
+   * Set an exception and return ``NULL`` on error.
+
+   *negative* is ``1`` if the number is negative, or ``0`` otherwise.
+
+   *ndigits* is the number of digits in the *digits* array.
+
+   *digits* is an array of unsigned digits.
+
+   See :c:struct:`PyUnstable_Long_LAYOUT` for the internal layout of an integer.
+
+
+.. c:struct:: PyUnstable_LongExport
+
+   A Python :class:`int` object exported as an array of digits.
+
+   See :c:struct:`PyUnstable_Long_LAYOUT` for the internal layout of an integer.
+
+   .. c:member:: PyLongObject *obj
+
+      Strong reference to the Python :class:`int` object.
+
+   .. c:member:: int negative
+
+      1 if the number is negative, 0 otherwise.
+
+   .. c:member:: size_t ndigits
+
+      Number of digits in :c:member:`digits` array.
+
+   .. c:member:: Py_digit *digits
+
+      Array of unsigned digits.
+
+
+.. c:function:: int PyUnstable_Long_Export(PyLongObject *obj, PyUnstable_LongExport *export)
+
+   Export a Python :class:`int` object as an array of digits.
+
+   * Set *\*export* and return 0 on success.
+   * Set an exception and return -1 on error.
+
+   :c:func:`PyUnstable_Long_ReleaseExport` must be called once done with using
+   *export*.
+
+
+.. c:function:: void PyUnstable_Long_ReleaseExport(PyUnstable_LongExport *export)
+
+   Release an export created by :c:func:`PyUnstable_Long_Export`.

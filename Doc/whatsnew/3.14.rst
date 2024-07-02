@@ -347,6 +347,14 @@ New Features
 
   (Contributed by Victor Stinner in :gh:`119182`.)
 
+* Add a new unstable import and export API for Python :class:`int` objects:
+
+  * :c:func:`PyUnstable_Long_Import`;
+  * :c:func:`PyUnstable_Long_Export`;
+  * :c:struct:`PyUnstable_Long_LAYOUT`.
+
+  (Contributed by Victor Stinner in :gh:`102471`.)
+
 Porting to Python 3.14
 ----------------------
 

@@ -61,6 +61,8 @@ typedef long stwodigits; /* signed variant of twodigits */
 #define PyLong_BASE     ((digit)1 << PyLong_SHIFT)
 #define PyLong_MASK     ((digit)(PyLong_BASE - 1))
 
+typedef digit Py_digit;
+
 /* Long integer representation.
 
    Long integers are made up of a number of 30- or 15-bit digits, depending on
@@ -138,6 +140,43 @@ _PyLong_CompactValue(PyLongObject *op)
 
 #define PyUnstable_Long_CompactValue _PyLong_CompactValue
 
+
+/* --- Import/Export API -------------------------------------------------- */
+
+typedef struct PyUnstable_LongLayout {
+    // Bits per digit
+    uint8_t bits_per_digit;
+
+    // Digit size in bytes: sizeof(digit)
+    uint8_t digit_size;
+
+    // Word endian:
+    // - 1 for most significant byte first (big endian)
+    // - 0 for least significant first (little endian)
+    int8_t word_endian;
+
+    // Array endian:
+    // - 1 for most significant byte first (big endian)
+    // - 0 for least significant first (little endian)
+    int8_t array_endian;
+} PyUnstable_LongLayout;
+
+PyAPI_DATA(const PyUnstable_LongLayout) PyUnstable_Long_LAYOUT;
+
+PyAPI_FUNC(PyObject*) PyUnstable_Long_Import(
+    int negative,
+    size_t ndigits,
+    Py_digit *digits);
+
+typedef struct PyUnstable_LongExport {
+    PyLongObject *obj;
+    int negative;
+    size_t ndigits;
+    Py_digit *digits;
+} PyUnstable_LongExport;
+
+PyAPI_FUNC(int) PyUnstable_Long_Export(PyLongObject *obj, PyUnstable_LongExport *export);
+PyAPI_FUNC(void) PyUnstable_Long_ReleaseExport(PyUnstable_LongExport *export);
 
 #ifdef __cplusplus
 }
