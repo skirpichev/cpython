@@ -554,7 +554,7 @@ Import/Export API
    It is usually used in an *array of digits*, such as the
    :c:member:`PyUnstable_LongExport.digits` array.
 
-   Its size depend on the :c:macro:`PYLONG_BITS_IN_DIGIT` macro:
+   Its size depend on the :c:macro:`!PYLONG_BITS_IN_DIGIT` macro:
    see the ``configure`` :option:`--enable-big-digits` option.
 
    See :c:member:`PyUnstable_Long_LAYOUT.bits_per_digit` for the number of bits per
