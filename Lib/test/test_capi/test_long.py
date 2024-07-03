@@ -768,6 +768,13 @@ class LongTests(unittest.TestCase):
         self.assertEqual(pylong_export(shift**2 * 3 + shift * 2 + 1),
                          (0, [1, 2, 3]))
 
+        with self.assertRaises(TypeError):
+            pylong_export(1.0)
+        with self.assertRaises(TypeError):
+            pylong_export(0+1j)
+        with self.assertRaises(TypeError):
+            pylong_export("abc")
+
     def test_long_import(self):
         # Test PyLong_Import()
         layout = _testcapi.get_pylong_layout()

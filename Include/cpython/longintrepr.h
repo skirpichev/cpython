@@ -176,7 +176,7 @@ typedef struct PyUnstable_LongExport {
 } PyUnstable_LongExport;
 
 PyAPI_FUNC(int) PyUnstable_Long_Export(
-    PyLongObject *obj,
+    PyObject *obj,
     PyUnstable_LongExport *long_export);
 PyAPI_FUNC(void) PyUnstable_Long_ReleaseExport(
     PyUnstable_LongExport *long_export);

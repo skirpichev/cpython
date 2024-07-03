@@ -6702,17 +6702,21 @@ PyUnstable_Long_Import(int negative, size_t ndigits, Py_digit *digits)
 
 
 int
-PyUnstable_Long_Export(PyLongObject *obj, PyUnstable_LongExport *long_export)
+PyUnstable_Long_Export(PyObject *obj, PyUnstable_LongExport *long_export)
 {
-    assert(PyLong_Check(obj));
+    if (!PyLong_Check(obj)) {
+        PyErr_Format(PyExc_TypeError, "expect int, got %T", obj);
+        return -1;
+    }
+    PyLongObject *self = (PyLongObject*)obj;
 
     long_export->obj = (PyLongObject*)Py_NewRef(obj);
-    long_export->negative = _PyLong_IsNegative(obj);
-    long_export->ndigits = _PyLong_DigitCount(obj);
+    long_export->negative = _PyLong_IsNegative(self);
+    long_export->ndigits = _PyLong_DigitCount(self);
     if (long_export->ndigits == 0) {
         long_export->ndigits = 1;
     }
-    long_export->digits = obj->long_value.ob_digit;
+    long_export->digits = self->long_value.ob_digit;
     return 0;
 }
 

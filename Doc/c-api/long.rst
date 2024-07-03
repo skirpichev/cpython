@@ -630,7 +630,7 @@ Import/Export API
       Array of unsigned digits.
 
 
-.. c:function:: int PyUnstable_Long_Export(PyLongObject *obj, PyUnstable_LongExport *export)
+.. c:function:: int PyUnstable_Long_Export(PyObject *obj, PyUnstable_LongExport *export)
 
    Export a Python :class:`int` object as an array of digits.
 

@@ -163,13 +163,8 @@ error:
 static PyObject *
 pylong_export(PyObject *module, PyObject *obj)
 {
-    if (!PyLong_Check(obj)) {
-        PyErr_Format(PyExc_TypeError, "expect int, got %T", obj);
-        return NULL;
-    }
-
     PyUnstable_LongExport long_export;
-    if (PyUnstable_Long_Export((PyLongObject*)obj, &long_export) < 0) {
+    if (PyUnstable_Long_Export(obj, &long_export) < 0) {
         return NULL;
     }
 
