@@ -175,8 +175,11 @@ typedef struct PyUnstable_LongExport {
     Py_digit *digits;
 } PyUnstable_LongExport;
 
-PyAPI_FUNC(int) PyUnstable_Long_Export(PyLongObject *obj, PyUnstable_LongExport *export);
-PyAPI_FUNC(void) PyUnstable_Long_ReleaseExport(PyUnstable_LongExport *export);
+PyAPI_FUNC(int) PyUnstable_Long_Export(
+    PyLongObject *obj,
+    PyUnstable_LongExport *long_export);
+PyAPI_FUNC(void) PyUnstable_Long_ReleaseExport(
+    PyUnstable_LongExport *long_export);
 
 #ifdef __cplusplus
 }

@@ -6702,26 +6702,26 @@ PyUnstable_Long_Import(int negative, size_t ndigits, Py_digit *digits)
 
 
 int
-PyUnstable_Long_Export(PyLongObject *obj, PyUnstable_LongExport *export)
+PyUnstable_Long_Export(PyLongObject *obj, PyUnstable_LongExport *long_export)
 {
     assert(PyLong_Check(obj));
 
-    export->obj = (PyLongObject*)Py_NewRef(obj);
-    export->negative = _PyLong_IsNegative(obj);
-    export->ndigits = _PyLong_DigitCount(obj);
-    if (export->ndigits == 0) {
-        export->ndigits = 1;
+    long_export->obj = (PyLongObject*)Py_NewRef(obj);
+    long_export->negative = _PyLong_IsNegative(obj);
+    long_export->ndigits = _PyLong_DigitCount(obj);
+    if (long_export->ndigits == 0) {
+        long_export->ndigits = 1;
     }
-    export->digits = obj->long_value.ob_digit;
+    long_export->digits = obj->long_value.ob_digit;
     return 0;
 }
 
 
 void
-PyUnstable_Long_ReleaseExport(PyUnstable_LongExport *export)
+PyUnstable_Long_ReleaseExport(PyUnstable_LongExport *long_export)
 {
-    Py_CLEAR(export->obj);
-    export->negative = 0;
-    export->ndigits = 0;
-    export->digits = NULL;
+    Py_CLEAR(long_export->obj);
+    long_export->negative = 0;
+    long_export->ndigits = 0;
+    long_export->digits = NULL;
 }

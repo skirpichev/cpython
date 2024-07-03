@@ -168,14 +168,14 @@ pylong_export(PyObject *module, PyObject *obj)
         return NULL;
     }
 
-    PyUnstable_LongExport export;
-    if (PyUnstable_Long_Export((PyLongObject*)obj, &export) < 0) {
+    PyUnstable_LongExport long_export;
+    if (PyUnstable_Long_Export((PyLongObject*)obj, &long_export) < 0) {
         return NULL;
     }
 
     PyObject *digits = PyList_New(0);
-    for (size_t i=0; i < export.ndigits; i++) {
-        PyObject *digit = PyLong_FromUnsignedLong(export.digits[i]);
+    for (size_t i=0; i < long_export.ndigits; i++) {
+        PyObject *digit = PyLong_FromUnsignedLong(long_export.digits[i]);
         if (digit == NULL) {
             Py_DECREF(digits);
             goto error;
@@ -189,12 +189,12 @@ pylong_export(PyObject *module, PyObject *obj)
         Py_DECREF(digit);
     }
 
-    PyObject *res = Py_BuildValue("(iN)", export.negative, digits);
-    PyUnstable_Long_ReleaseExport(&export);
+    PyObject *res = Py_BuildValue("(iN)", long_export.negative, digits);
+    PyUnstable_Long_ReleaseExport(&long_export);
     return res;
 
 error:
-    PyUnstable_Long_ReleaseExport(&export);
+    PyUnstable_Long_ReleaseExport(&long_export);
     return NULL;
 }
 
