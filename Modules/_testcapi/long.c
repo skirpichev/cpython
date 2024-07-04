@@ -163,14 +163,14 @@ error:
 static PyObject *
 pylong_export(PyObject *module, PyObject *obj)
 {
-    PyUnstable_LongExport long_export;
-    if (PyUnstable_Long_Export(obj, &long_export) < 0) {
+    PyUnstable_Long_DigitArray array;
+    if (PyUnstable_Long_Export(obj, &array) < 0) {
         return NULL;
     }
 
     PyObject *digits = PyList_New(0);
-    for (size_t i=0; i < long_export.ndigits; i++) {
-        PyObject *digit = PyLong_FromUnsignedLong(long_export.digits[i]);
+    for (size_t i=0; i < array.ndigits; i++) {
+        PyObject *digit = PyLong_FromUnsignedLong(array.digits[i]);
         if (digit == NULL) {
             Py_DECREF(digits);
             goto error;
@@ -184,12 +184,12 @@ pylong_export(PyObject *module, PyObject *obj)
         Py_DECREF(digit);
     }
 
-    PyObject *res = Py_BuildValue("(iN)", long_export.negative, digits);
-    PyUnstable_Long_ReleaseExport(&long_export);
+    PyObject *res = Py_BuildValue("(iN)", array.negative, digits);
+    PyUnstable_Long_ReleaseExport(&array);
     return res;
 
 error:
-    PyUnstable_Long_ReleaseExport(&long_export);
+    PyUnstable_Long_ReleaseExport(&array);
     return NULL;
 }
 

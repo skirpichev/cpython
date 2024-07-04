@@ -168,18 +168,18 @@ PyAPI_FUNC(PyObject*) PyUnstable_Long_Import(
     size_t ndigits,
     Py_digit *digits);
 
-typedef struct PyUnstable_LongExport {
+typedef struct PyUnstable_Long_DigitArray {
     PyLongObject *obj;
     int negative;
     size_t ndigits;
     Py_digit *digits;
-} PyUnstable_LongExport;
+} PyUnstable_Long_DigitArray;
 
 PyAPI_FUNC(int) PyUnstable_Long_Export(
     PyObject *obj,
-    PyUnstable_LongExport *long_export);
+    PyUnstable_Long_DigitArray *array);
 PyAPI_FUNC(void) PyUnstable_Long_ReleaseExport(
-    PyUnstable_LongExport *long_export);
+    PyUnstable_Long_DigitArray *array);
 
 #ifdef __cplusplus
 }

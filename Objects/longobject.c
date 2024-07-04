@@ -6702,7 +6702,7 @@ PyUnstable_Long_Import(int negative, size_t ndigits, Py_digit *digits)
 
 
 int
-PyUnstable_Long_Export(PyObject *obj, PyUnstable_LongExport *long_export)
+PyUnstable_Long_Export(PyObject *obj, PyUnstable_Long_DigitArray *array)
 {
     if (!PyLong_Check(obj)) {
         PyErr_Format(PyExc_TypeError, "expect int, got %T", obj);
@@ -6710,22 +6710,22 @@ PyUnstable_Long_Export(PyObject *obj, PyUnstable_LongExport *long_export)
     }
     PyLongObject *self = (PyLongObject*)obj;
 
-    long_export->obj = (PyLongObject*)Py_NewRef(obj);
-    long_export->negative = _PyLong_IsNegative(self);
-    long_export->ndigits = _PyLong_DigitCount(self);
-    if (long_export->ndigits == 0) {
-        long_export->ndigits = 1;
+    array->obj = (PyLongObject*)Py_NewRef(obj);
+    array->negative = _PyLong_IsNegative(self);
+    array->ndigits = _PyLong_DigitCount(self);
+    if (array->ndigits == 0) {
+        array->ndigits = 1;
     }
-    long_export->digits = self->long_value.ob_digit;
+    array->digits = self->long_value.ob_digit;
     return 0;
 }
 
 
 void
-PyUnstable_Long_ReleaseExport(PyUnstable_LongExport *long_export)
+PyUnstable_Long_ReleaseExport(PyUnstable_Long_DigitArray *array)
 {
-    Py_CLEAR(long_export->obj);
-    long_export->negative = 0;
-    long_export->ndigits = 0;
-    long_export->digits = NULL;
+    Py_CLEAR(array->obj);
+    array->negative = 0;
+    array->ndigits = 0;
+    array->digits = NULL;
 }
