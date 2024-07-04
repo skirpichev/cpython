@@ -136,17 +136,16 @@ pylong_import(PyObject *module, PyObject *args)
     for (Py_ssize_t i=0; i < ndigits; i++) {
         PyObject *item = PyList_GET_ITEM(list, i);
 
-        long as_long = PyLong_AsLong(item);
-        if (as_long == -1 && PyErr_Occurred()) {
+        long digit = PyLong_AsLong(item);
+        if (digit == -1 && PyErr_Occurred()) {
             goto error;
         }
 
-        Py_digit digit = (Py_digit)as_long;
-        if ((long)digit != as_long) {
+        if (digit < 0 || digit >= PyLong_BASE) {
             PyErr_SetString(PyExc_ValueError, "digit doesn't fit into Py_digit");
             goto error;
         }
-        digits[i] = digit;
+        digits[i] = (Py_digit)digit;
     }
 
     PyObject *res = PyLong_Import(negative, ndigits, digits);

@@ -784,8 +784,13 @@ class LongTests(unittest.TestCase):
         self.assertEqual(pylong_import(0, [0]), 0)
         self.assertEqual(pylong_import(0, [123]), 123)
         self.assertEqual(pylong_import(1, [123]), -123)
+        self.assertEqual(pylong_import(1, [1, 2]),
+                         -(shift * 2 + 1))
         self.assertEqual(pylong_import(0, [1, 2, 3]),
                          shift**2 * 3 + shift * 2 + 1)
+        mask = shift - 1
+        self.assertEqual(pylong_import(0, [mask, mask, mask]),
+                         shift**2 * mask + shift * mask + mask)
 
         # normalize
         self.assertEqual(pylong_import(0, [123, 0, 0]), 123)
