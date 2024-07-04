@@ -564,26 +564,26 @@ Import/Export API
 
 .. c:struct:: PyLong_LAYOUT
 
-   Internal layout of a Python :class:`int` object.
+   Layout of an array of digits, used by Python :class:`int` object.
 
    See also :attr:`sys.int_info` which exposes similar information to Python.
 
-   .. c:member:: uint8_t bits_per_digit;
+   .. c:member:: uint8_t bits_per_digit
 
       Bits per digit.
 
-   .. c:member:: uint8_t digit_size;
+   .. c:member:: uint8_t digit_size
 
       Digit size in bytes.
 
-   .. c:member:: int8_t word_endian;
+   .. c:member:: int8_t word_endian
 
       Word endian:
 
       - ``1`` for most significant byte first (big endian)
       - ``-1`` for least significant first (little endian)
 
-   .. c:member:: int8_t array_endian;
+   .. c:member:: int8_t array_endian
 
       Array endian:
 
@@ -595,8 +595,8 @@ Import/Export API
 
    Create a Python :class:`int` object from an array of digits.
 
-   * Return a Python :class:`int` object on success.
-   * Set an exception and return ``NULL`` on error.
+   On success, return a Python :class:`int` object.
+   On error, set an exception and return ``NULL``.
 
    *negative* is ``1`` if the number is negative, or ``0`` otherwise.
 
@@ -604,15 +604,16 @@ Import/Export API
 
    *digits* is an array of unsigned digits.
 
-   See :c:struct:`PyLong_LAYOUT` for the internal layout of an integer.
+   See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
+
+   See also the :ref:`PyLongWriter API <pylongwriter>`.
 
 
 .. c:struct:: PyLong_DigitArray
 
    A Python :class:`int` object exported as an array of digits.
 
-   See :c:struct:`PyLong_LAYOUT` for the internal layout of an
-   integer.
+   See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
 
    .. c:member:: PyLongObject *obj
 
@@ -635,8 +636,8 @@ Import/Export API
 
    Export a Python :class:`int` object as an array of digits.
 
-   * Set *\*array* and return 0 on success.
-   * Set an exception and return -1 on error.
+   On success, set *\*array* and return 0.
+   On error, set an exception and return -1.
 
    This function always succeeds if *obj* is a Python :class:`int` object or a
    subclass.
@@ -648,3 +649,68 @@ Import/Export API
 .. c:function:: void PyLong_ReleaseExport(PyLong_DigitArray *array)
 
    Release the export *array* created by :c:func:`PyLong_Export`.
+
+
+.. _pylongwriter:
+
+PyLongWriter API
+^^^^^^^^^^^^^^^^
+
+The :c:func:`PyLong_Import` function can be used to create a Python
+:class:`int` from an array of digits. When converting an integer from another
+format to a Python :class:`int`, creating a temporary array of digits can be
+inefficient. In this case, the :c:type:`PyLongWriter` API can be used for even
+more efficient import.
+
+.. versionadded:: 3.14
+
+.. c:struct:: PyLongWriter
+
+   A Python :class:`int` writer instance.
+
+   The instance must be destroyed by :c:func:`PyLongWriter_Finish`.
+
+
+.. c:function:: PyLongWriter* PyLongWriter_Create(int negative, size_t ndigits, Py_digit **digits)
+
+   Create a :c:type:`PyLongWriter`.
+
+   On success, set *\*digits* and return a writer.
+   On error, set an exception and return ``NULL``.
+
+   *negative* is ``1`` if the number is negative, or ``0`` otherwise.
+
+   *ndigits* is the number of digits in the *digits* array.
+
+   The caller must initialize the array of digits *digits* and then call
+   :c:func:`PyLongWriter_Finish` to get a Python :class:`int`.
+
+   See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
+
+   See also the :c:func:`PyLong_Import` function.
+
+
+.. c:function:: PyObject* PyLongWriter_Finish(PyLongWriter *writer)
+
+   Finish a :c:type:`PyLongWriter` created by :c:func:`PyLongWriter_Create`.
+
+   On success, return a Python :class:`int` object.
+   On error, set an exception and return ``NULL``.
+
+Example with a single digit::
+
+    PyObject*
+    create_integer(int8_t value)
+    {
+        // An int8_t always fit into a single Py_digit
+        assert(-(int)PyLong_BASE <= value && value <= (int)PyLong_BASE);
+
+        Py_digit *digits;
+        PyLongWriter *writer = PyLongWriter_Create((value < 0), 1, &digits);
+        if (writer == NULL) {
+            return NULL;
+        }
+
+        digits[0] = ((value >= 0) ? value : -value);
+        return PyLongWriter_Finish(writer);
+    }

@@ -194,6 +194,28 @@ error:
 
 
 static PyObject *
+pylongwriter_create(PyObject *module, PyObject *args)
+{
+    int value;
+    if (!PyArg_ParseTuple(args, "i", &value)) {
+        return NULL;
+    }
+    if (value <= -(int)PyLong_BASE || value >= (int)PyLong_BASE) {
+        PyErr_SetString(PyExc_ValueError, "digit doesn't fit into Py_digit");
+        return NULL;
+    }
+
+    Py_digit *digits;
+    PyLongWriter *writer = PyLongWriter_Create((value < 0), 1, &digits);
+    if (writer == NULL) {
+        return NULL;
+    }
+    digits[0] = ((value >= 0) ? value : -value);
+    return PyLongWriter_Finish(writer);
+}
+
+
+static PyObject *
 get_pylong_layout(PyObject *module, PyObject *Py_UNUSED(args))
 {
     PyLongLayout layout = PyLong_LAYOUT;
@@ -260,6 +282,7 @@ static PyMethodDef test_methods[] = {
     {"pylong_aspid",                pylong_aspid,               METH_O},
     {"pylong_import",               pylong_import,              METH_VARARGS},
     {"pylong_export",               pylong_export,              METH_O},
+    {"pylongwriter_create",         pylongwriter_create,        METH_VARARGS},
     {"get_pylong_layout",           get_pylong_layout,          METH_NOARGS},
     {NULL},
 };
