@@ -171,6 +171,8 @@ _PyLong_New(Py_ssize_t size)
 PyLongObject *
 _PyLong_FromDigits(int negative, Py_ssize_t digit_count, digit *digits)
 {
+    assert(digit_count >= 0);
+
     Py_digit *writer_digits;
     PyLongWriter *writer = PyLongWriter_Create(negative, digit_count, &writer_digits);
     if (writer == NULL) {
@@ -6692,7 +6694,13 @@ const PyLongLayout PyLong_LAYOUT = {
 PyObject*
 PyLong_Import(int negative, size_t ndigits, Py_digit *digits)
 {
-    return (PyObject*)_PyLong_FromDigits(negative, ndigits, digits);
+    if (ndigits > (size_t)PY_SSIZE_T_MAX) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    return (PyObject*)_PyLong_FromDigits(negative,
+                                         (Py_ssize_t)ndigits, digits);
 }
 
 
