@@ -1,4 +1,4 @@
-Add a new unstable import and export API for Python :class:`int` objects:
+Add a new import and export API for Python :class:`int` objects:
 
 * :c:func:`PyLong_Import`;
 * :c:func:`PyLong_Export`;
