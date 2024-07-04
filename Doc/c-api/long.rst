@@ -637,6 +637,9 @@ Import/Export API
    * Set *\*export* and return 0 on success.
    * Set an exception and return -1 on error.
 
+   This function always succeeds if *obj* is a Python :class:`int` object or a
+   subclass.
+
    :c:func:`PyUnstable_Long_ReleaseExport` must be called once done with using
    *export*.
 
