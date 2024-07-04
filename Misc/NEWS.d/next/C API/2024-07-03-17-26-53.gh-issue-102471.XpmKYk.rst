@@ -1,7 +1,7 @@
 Add a new unstable import and export API for Python :class:`int` objects:
 
-* :c:func:`PyUnstable_Long_Import`;
-* :c:func:`PyUnstable_Long_Export`;
-* :c:struct:`PyUnstable_Long_LAYOUT`.
+* :c:func:`PyLong_Import`;
+* :c:func:`PyLong_Export`;
+* :c:struct:`PyLong_LAYOUT`.
 
 Patch by Victor Stinner.
