@@ -181,6 +181,17 @@ PyAPI_FUNC(int) PyUnstable_Long_Export(
 PyAPI_FUNC(void) PyUnstable_Long_ReleaseExport(
     PyUnstable_Long_DigitArray *array);
 
+
+/* --- PyLongWriter API --------------------------------------------------- */
+
+typedef struct PyLongWriter PyLongWriter;
+
+PyAPI_FUNC(PyLongWriter*) PyLongWriter_Create(void);
+PyAPI_FUNC(Py_digit*) PyLongWriter_AllocDigits(PyLongWriter *writer, size_t ndigits);
+PyAPI_FUNC(void) PyLongWriter_SetSign(PyLongWriter *writer, int sign);
+PyAPI_FUNC(PyObject*) PyLongWriter_Finish(PyLongWriter *writer);
+PyAPI_FUNC(void) PyLongWriter_Discard(PyLongWriter *writer);
+
 #ifdef __cplusplus
 }
 #endif
