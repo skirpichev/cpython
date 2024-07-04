@@ -172,15 +172,11 @@ PyLongObject *
 _PyLong_FromDigits(int negative, Py_ssize_t digit_count, digit *digits)
 {
     Py_digit *writer_digits;
-    PyLongWriter *writer = PyLongWriter_Create(digit_count, &writer_digits);
+    PyLongWriter *writer = PyLongWriter_Create(negative, digit_count, &writer_digits);
     if (writer == NULL) {
         return NULL;
     }
     memcpy(writer_digits, digits, digit_count * sizeof(digit));
-    if (negative) {
-        PyLongWriter_SetNegative(writer);
-    }
-
     return (PyLongObject*)PyLongWriter_Finish(writer);
 }
 
@@ -6732,7 +6728,7 @@ PyLong_ReleaseExport(PyLong_DigitArray *array)
 
 /* --- PyLongWriter API --------------------------------------------------- */
 
-PyLongWriter* PyLongWriter_Create(size_t ndigits, Py_digit **digits)
+PyLongWriter* PyLongWriter_Create(int negative, size_t ndigits, Py_digit **digits)
 {
     if (ndigits > (size_t)PY_SSIZE_T_MAX) {
         PyErr_NoMemory();
@@ -6744,20 +6740,12 @@ PyLongWriter* PyLongWriter_Create(size_t ndigits, Py_digit **digits)
     if (obj == NULL) {
         return NULL;
     }
+    if (negative) {
+        _PyLong_FlipSign(obj);
+    }
 
     *digits = obj->long_value.ob_digit;
     return (PyLongWriter*)obj;
-}
-
-
-void PyLongWriter_SetNegative(PyLongWriter *writer)
-{
-    PyLongObject *obj = (PyLongObject *)writer;
-    assert(Py_REFCNT(obj) == 1);
-
-    if (_PyLong_IsPositive(obj)) {
-        _PyLong_FlipSign(obj);
-    }
 }
 
 

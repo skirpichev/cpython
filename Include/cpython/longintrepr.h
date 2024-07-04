@@ -187,9 +187,9 @@ PyAPI_FUNC(void) PyLong_ReleaseExport(
 typedef struct PyLongWriter PyLongWriter;
 
 PyAPI_FUNC(PyLongWriter*) PyLongWriter_Create(
+    int negative,
     size_t ndigits,
     Py_digit **digits);
-PyAPI_FUNC(void) PyLongWriter_SetNegative(PyLongWriter *writer);
 PyAPI_FUNC(PyObject*) PyLongWriter_Finish(PyLongWriter *writer);
 
 #ifdef __cplusplus
