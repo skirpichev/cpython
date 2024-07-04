@@ -149,7 +149,7 @@ pylong_import(PyObject *module, PyObject *args)
         digits[i] = digit;
     }
 
-    PyObject *res = PyUnstable_Long_Import(negative, ndigits, digits);
+    PyObject *res = PyLong_Import(negative, ndigits, digits);
     PyMem_Free(digits);
 
     return res;
@@ -163,8 +163,8 @@ error:
 static PyObject *
 pylong_export(PyObject *module, PyObject *obj)
 {
-    PyUnstable_Long_DigitArray array;
-    if (PyUnstable_Long_Export(obj, &array) < 0) {
+    PyLong_DigitArray array;
+    if (PyLong_Export(obj, &array) < 0) {
         return NULL;
     }
 
@@ -185,11 +185,11 @@ pylong_export(PyObject *module, PyObject *obj)
     }
 
     PyObject *res = Py_BuildValue("(iN)", array.negative, digits);
-    PyUnstable_Long_ReleaseExport(&array);
+    PyLong_ReleaseExport(&array);
     return res;
 
 error:
-    PyUnstable_Long_ReleaseExport(&array);
+    PyLong_ReleaseExport(&array);
     return NULL;
 }
 
@@ -197,7 +197,7 @@ error:
 static PyObject *
 get_pylong_layout(PyObject *module, PyObject *Py_UNUSED(args))
 {
-    PyUnstable_LongLayout layout = PyUnstable_Long_LAYOUT;
+    PyLongLayout layout = PyLong_LAYOUT;
 
     PyObject *dict = PyDict_New();
     if (dict == NULL) {

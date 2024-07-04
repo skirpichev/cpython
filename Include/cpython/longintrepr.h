@@ -143,7 +143,7 @@ _PyLong_CompactValue(PyLongObject *op)
 
 /* --- Import/Export API -------------------------------------------------- */
 
-typedef struct PyUnstable_LongLayout {
+typedef struct PyLongLayout {
     // Bits per digit
     uint8_t bits_per_digit;
 
@@ -159,27 +159,27 @@ typedef struct PyUnstable_LongLayout {
     // - 1 for most significant byte first (big endian)
     // - -1 for least significant first (little endian)
     int8_t array_endian;
-} PyUnstable_LongLayout;
+} PyLongLayout;
 
-PyAPI_DATA(const PyUnstable_LongLayout) PyUnstable_Long_LAYOUT;
+PyAPI_DATA(const PyLongLayout) PyLong_LAYOUT;
 
-PyAPI_FUNC(PyObject*) PyUnstable_Long_Import(
+PyAPI_FUNC(PyObject*) PyLong_Import(
     int negative,
     size_t ndigits,
     Py_digit *digits);
 
-typedef struct PyUnstable_Long_DigitArray {
+typedef struct PyLong_DigitArray {
     PyLongObject *obj;
     int negative;
     size_t ndigits;
     Py_digit *digits;
-} PyUnstable_Long_DigitArray;
+} PyLong_DigitArray;
 
-PyAPI_FUNC(int) PyUnstable_Long_Export(
+PyAPI_FUNC(int) PyLong_Export(
     PyObject *obj,
-    PyUnstable_Long_DigitArray *array);
-PyAPI_FUNC(void) PyUnstable_Long_ReleaseExport(
-    PyUnstable_Long_DigitArray *array);
+    PyLong_DigitArray *array);
+PyAPI_FUNC(void) PyLong_ReleaseExport(
+    PyLong_DigitArray *array);
 
 
 /* --- PyLongWriter API --------------------------------------------------- */
