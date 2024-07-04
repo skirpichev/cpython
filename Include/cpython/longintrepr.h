@@ -186,11 +186,11 @@ PyAPI_FUNC(void) PyLong_ReleaseExport(
 
 typedef struct PyLongWriter PyLongWriter;
 
-PyAPI_FUNC(PyLongWriter*) PyLongWriter_Create(void);
-PyAPI_FUNC(Py_digit*) PyLongWriter_AllocDigits(PyLongWriter *writer, size_t ndigits);
-PyAPI_FUNC(void) PyLongWriter_SetSign(PyLongWriter *writer, int sign);
+PyAPI_FUNC(PyLongWriter*) PyLongWriter_Create(
+    size_t ndigits,
+    Py_digit **digits);
+PyAPI_FUNC(void) PyLongWriter_SetNegative(PyLongWriter *writer);
 PyAPI_FUNC(PyObject*) PyLongWriter_Finish(PyLongWriter *writer);
-PyAPI_FUNC(void) PyLongWriter_Discard(PyLongWriter *writer);
 
 #ifdef __cplusplus
 }

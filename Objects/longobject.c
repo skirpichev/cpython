@@ -171,26 +171,17 @@ _PyLong_New(Py_ssize_t size)
 PyLongObject *
 _PyLong_FromDigits(int negative, Py_ssize_t digit_count, digit *digits)
 {
-    PyLongWriter *writer = PyLongWriter_Create();
+    Py_digit *writer_digits;
+    PyLongWriter *writer = PyLongWriter_Create(digit_count, &writer_digits);
     if (writer == NULL) {
         return NULL;
     }
-
-    if (negative) {
-        PyLongWriter_SetSign(writer, -1);
-    }
-
-    Py_digit *writer_digits = PyLongWriter_AllocDigits(writer, digit_count);
-    if (writer_digits == NULL) {
-        goto error;
-    }
     memcpy(writer_digits, digits, digit_count * sizeof(digit));
+    if (negative) {
+        PyLongWriter_SetNegative(writer);
+    }
 
     return (PyLongObject*)PyLongWriter_Finish(writer);
-
-error:
-    PyLongWriter_Discard(writer);
-    return NULL;
 }
 
 PyObject *
@@ -6741,66 +6732,42 @@ PyLong_ReleaseExport(PyLong_DigitArray *array)
 
 /* --- PyLongWriter API --------------------------------------------------- */
 
-struct PyLongWriter {
-    PyLongObject *obj;
-    int sign;
-};
-
-PyLongWriter* PyLongWriter_Create(void)
+PyLongWriter* PyLongWriter_Create(size_t ndigits, Py_digit **digits)
 {
-    PyLongWriter *writer = PyMem_Malloc(sizeof(PyLongWriter));
-    if (writer == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    writer->obj = NULL;
-    writer->sign = 1;
-    return writer;
-}
-
-Py_digit* PyLongWriter_AllocDigits(PyLongWriter *writer, size_t ndigits)
-{
-    Py_CLEAR(writer->obj);
-
     if (ndigits > (size_t)PY_SSIZE_T_MAX) {
         PyErr_NoMemory();
         return NULL;
     }
+    assert(digits != NULL);
 
-    writer->obj = _PyLong_New(ndigits);
-    if (writer->obj == NULL) {
+    PyLongObject *obj = _PyLong_New(ndigits);
+    if (obj == NULL) {
         return NULL;
     }
 
-    return writer->obj->long_value.ob_digit;
+    *digits = obj->long_value.ob_digit;
+    return (PyLongWriter*)obj;
 }
 
-void PyLongWriter_SetSign(PyLongWriter *writer, int sign)
+
+void PyLongWriter_SetNegative(PyLongWriter *writer)
 {
-    writer->sign = sign;
+    PyLongObject *obj = (PyLongObject *)writer;
+    assert(Py_REFCNT(obj) == 1);
+
+    if (_PyLong_IsPositive(obj)) {
+        _PyLong_FlipSign(obj);
+    }
 }
+
 
 PyObject* PyLongWriter_Finish(PyLongWriter *writer)
 {
-    if (writer->obj) {
-        assert(Py_REFCNT(writer->obj) == 1);
+    PyLongObject *obj = (PyLongObject *)writer;
+    assert(Py_REFCNT(obj) == 1);
 
-        if (writer->sign < 0 && _PyLong_IsPositive(writer->obj)) {
-            _PyLong_FlipSign(writer->obj);
-        }
+    // Normalize and get singleton if possible
+    obj = maybe_small_long(long_normalize(obj));
 
-        writer->obj = maybe_small_long(long_normalize(writer->obj));
-    }
-    else {
-        writer->obj = (PyLongObject*)Py_NewRef(_PyLong_GetZero());
-    }
-
-    PyObject *res = (PyObject*)writer->obj;
-    PyMem_Free(writer);
-    return res;
-}
-
-void PyLongWriter_Discard(PyLongWriter *writer)
-{
-    PyMem_Free(writer);
+    return (PyObject*)obj;
 }
