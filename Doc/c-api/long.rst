@@ -549,7 +549,7 @@ Import/Export API
 
 .. c:type:: Py_digit
 
-   A single unsigned digit.
+   A single unsigned digit in the range [``0``; ``PyLong_BASE - 1``].
 
    It is usually used in an *array of digits*, such as the
    :c:member:`PyLong_DigitArray.digits` array.
@@ -602,7 +602,8 @@ Import/Export API
 
    *ndigits* is the number of digits in the *digits* array.
 
-   *digits* is an array of unsigned digits.
+   *digits* is an array of unsigned digits. Digits must be in the range
+   [``0``; ``PyLong_BASE - 1``].
 
    See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
 
@@ -613,7 +614,7 @@ Import/Export API
 
    A Python :class:`int` object exported as an array of digits.
 
-   See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
+   See :c:struct:`PyLong_LAYOUT` for the :c:member:`digits` layout.
 
    .. c:member:: PyLongObject *obj
 
@@ -657,8 +658,8 @@ PyLongWriter API
 ^^^^^^^^^^^^^^^^
 
 The :c:func:`PyLong_Import` function can be used to create a Python
-:class:`int` from an array of digits. When converting an integer from another
-format to a Python :class:`int`, creating a temporary array of digits can be
+:class:`int` from an array of digits. When converting an integer from a format
+to a Python :class:`int`, creating a temporary array of digits can be
 inefficient. In this case, the :c:type:`PyLongWriter` API can be used for even
 more efficient import.
 
@@ -683,7 +684,8 @@ more efficient import.
    *ndigits* is the number of digits in the *digits* array.
 
    The caller must initialize the array of digits *digits* and then call
-   :c:func:`PyLongWriter_Finish` to get a Python :class:`int`.
+   :c:func:`PyLongWriter_Finish` to get a Python :class:`int`. Digits must be
+   in the range [``0``; ``PyLong_BASE - 1``].
 
    See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
 
