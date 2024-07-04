@@ -6688,8 +6688,8 @@ PyUnstable_Long_CompactValue(const PyLongObject* op) {
 
 const PyUnstable_LongLayout PyUnstable_Long_LAYOUT = {
     .bits_per_digit = PyLong_SHIFT,
-    .word_endian = PY_LITTLE_ENDIAN,
-    .array_endian = 0,  // least significant first
+    .word_endian = PY_LITTLE_ENDIAN ? -1 : 1,
+    .array_endian = -1,  // least significant first
     .digit_size = sizeof(digit),
 };
 

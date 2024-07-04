@@ -580,15 +580,15 @@ Import/Export API
 
       Word endian:
 
-      - 1 for most significant byte first (big endian)
-      - 0 for least significant first (little endian)
+      - ``1`` for most significant byte first (big endian)
+      - ``-1`` for least significant first (little endian)
 
    .. c:member:: int8_t array_endian;
 
       Array endian:
 
-      - 1 for most significant byte first (big endian)
-      - 0 for least significant first (little endian)
+      - ``1`` for most significant byte first (big endian)
+      - ``-1`` for least significant first (little endian)
 
 
 .. c:function:: PyObject* PyUnstable_Long_Import(int negative, size_t ndigits, Py_digit *digits)

@@ -749,10 +749,10 @@ class LongTests(unittest.TestCase):
         int_info = sys.int_info
         layout = _testcapi.get_pylong_layout()
         expected = {
-            'array_endian': 0,
+            'array_endian': -1,
             'bits_per_digit': int_info.bits_per_digit,
             'digit_size': int_info.sizeof_digit,
-            'word_endian': 1 if sys.byteorder == 'little' else 0,
+            'word_endian': -1 if sys.byteorder == 'little' else 1,
         }
         self.assertEqual(layout, expected)
 
