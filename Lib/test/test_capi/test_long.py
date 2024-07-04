@@ -787,6 +787,13 @@ class LongTests(unittest.TestCase):
         self.assertEqual(pylong_import(0, [1, 2, 3]),
                          shift**2 * 3 + shift * 2 + 1)
 
+        # normalize
+        self.assertEqual(pylong_import(0, [123, 0, 0]), 123)
+
+        # test singletons + normalize
+        for num in (-2, 0, 1, 5, 42, 100):
+            self.assertIs(pylong_import(bool(num < 0), [abs(num), 0]), num)
+
         # round trip: Python int -> export -> Python int
         pylong_export = _testcapi.pylong_export
         numbers = [*range(0, 10), 12345, 0xdeadbeef, 2**100, 2**100-1]
