@@ -6734,7 +6734,7 @@ PyLongWriter* PyLongWriter_Create(int negative, size_t ndigits, Py_digit **digit
     }
     assert(digits != NULL);
 
-    PyLongObject *obj = _PyLong_New(ndigits);
+    PyLongObject *obj = _PyLong_New((Py_ssize_t)ndigits);
     if (obj == NULL) {
         return NULL;
     }
