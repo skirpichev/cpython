@@ -169,17 +169,20 @@ _PyLong_New(Py_ssize_t size)
 }
 
 PyLongObject *
-_PyLong_FromDigits(int negative, Py_ssize_t digit_count, Py_digit *digits)
+_PyLong_FromDigits(int negative, Py_ssize_t digit_count, digit *digits)
 {
     assert(digit_count >= 0);
-
-    Py_digit *writer_digits;
-    PyLongWriter *writer = PyLongWriter_Create(negative, digit_count, &writer_digits);
-    if (writer == NULL) {
+    if (digit_count == 0) {
+        return (PyLongObject *)_PyLong_GetZero();
+    }
+    PyLongObject *result = _PyLong_New(digit_count);
+    if (result == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
-    memcpy(writer_digits, digits, digit_count * sizeof(digit));
-    return (PyLongObject*)PyLongWriter_Finish(writer);
+    _PyLong_SetSignAndDigitCount(result, negative?-1:1, digit_count);
+    memcpy(result->long_value.ob_digit, digits, digit_count * sizeof(digit));
+    return result;
 }
 
 PyObject *
