@@ -542,8 +542,8 @@ distinguished from a number.  Use :c:func:`PyErr_Occurred` to disambiguate.
    .. versionadded:: 3.12
 
 
-Import/Export API
-^^^^^^^^^^^^^^^^^
+Export API
+^^^^^^^^^^
 
 .. versionadded:: 3.14
 
@@ -591,25 +591,6 @@ Import/Export API
       - ``-1`` for least significant first (little endian)
 
 
-.. c:function:: PyObject* PyLong_Import(int negative, size_t ndigits, Py_digit *digits)
-
-   Create a Python :class:`int` object from an array of digits.
-
-   On success, return a Python :class:`int` object.
-   On error, set an exception and return ``NULL``.
-
-   *negative* is ``1`` if the number is negative, or ``0`` otherwise.
-
-   *ndigits* is the number of digits in the *digits* array.
-
-   *digits* is an array of unsigned digits. Digits must be in the range
-   [``0``; ``PyLong_BASE - 1``].
-
-   See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
-
-   See also the :ref:`PyLongWriter API <pylongwriter>`.
-
-
 .. c:struct:: PyLong_DigitArray
 
    A Python :class:`int` object exported as an array of digits.
@@ -652,16 +633,10 @@ Import/Export API
    Release the export *array* created by :c:func:`PyLong_Export`.
 
 
-.. _pylongwriter:
-
 PyLongWriter API
 ^^^^^^^^^^^^^^^^
 
-The :c:func:`PyLong_Import` function can be used to create a Python
-:class:`int` from an array of digits. When converting an integer from a format
-to a Python :class:`int`, creating a temporary array of digits can be
-inefficient. In this case, the :c:type:`PyLongWriter` API can be used for even
-more efficient import.
+The :c:type:`PyLongWriter` API can be used to import an integer.
 
 .. versionadded:: 3.14
 
@@ -698,3 +673,19 @@ more efficient import.
 
    On success, return a Python :class:`int` object.
    On error, set an exception and return ``NULL``.
+
+
+Example creating an integer from an array of digits::
+
+    PyObject *
+    long_import(int negative, size_t ndigits, Py_digit *digits)
+    {
+        Py_digit *writer_digits;
+        PyLongWriter *writer = PyLongWriter_Create(negative, ndigits,
+                                                   &writer_digits);
+        if (writer == NULL) {
+            return NULL;
+        }
+        memcpy(writer_digits, digits, ndigits * sizeof(digit));
+        return PyLongWriter_Finish(writer);
+    }

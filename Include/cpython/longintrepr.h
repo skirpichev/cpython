@@ -163,11 +163,6 @@ typedef struct PyLongLayout {
 
 PyAPI_DATA(const PyLongLayout) PyLong_LAYOUT;
 
-PyAPI_FUNC(PyObject*) PyLong_Import(
-    int negative,
-    size_t ndigits,
-    Py_digit *digits);
-
 typedef struct PyLong_DigitArray {
     PyObject *obj;
     int negative;

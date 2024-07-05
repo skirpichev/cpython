@@ -118,48 +118,6 @@ pylong_aspid(PyObject *module, PyObject *arg)
 
 
 static PyObject *
-pylong_import(PyObject *module, PyObject *args)
-{
-    int negative;
-    PyObject *list;
-    if (!PyArg_ParseTuple(args, "iO!", &negative, &PyList_Type, &list)) {
-        return NULL;
-    }
-    Py_ssize_t ndigits = PyList_GET_SIZE(list);
-
-    Py_digit *digits = PyMem_Malloc(ndigits * sizeof(Py_digit));
-    if (digits == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    for (Py_ssize_t i=0; i < ndigits; i++) {
-        PyObject *item = PyList_GET_ITEM(list, i);
-
-        long digit = PyLong_AsLong(item);
-        if (digit == -1 && PyErr_Occurred()) {
-            goto error;
-        }
-
-        if (digit < 0 || digit >= PyLong_BASE) {
-            PyErr_SetString(PyExc_ValueError, "digit doesn't fit into Py_digit");
-            goto error;
-        }
-        digits[i] = (Py_digit)digit;
-    }
-
-    PyObject *res = PyLong_Import(negative, ndigits, digits);
-    PyMem_Free(digits);
-
-    return res;
-
-error:
-    PyMem_Free(digits);
-    return NULL;
-}
-
-
-static PyObject *
 pylong_export(PyObject *module, PyObject *obj)
 {
     PyLong_DigitArray array;
@@ -196,22 +154,49 @@ error:
 static PyObject *
 pylongwriter_create(PyObject *module, PyObject *args)
 {
-    int value;
-    if (!PyArg_ParseTuple(args, "i", &value)) {
+    int negative;
+    PyObject *list;
+    if (!PyArg_ParseTuple(args, "iO!", &negative, &PyList_Type, &list)) {
         return NULL;
     }
-    if (value <= -(int)PyLong_BASE || value >= (int)PyLong_BASE) {
-        PyErr_SetString(PyExc_ValueError, "digit doesn't fit into Py_digit");
+    Py_ssize_t ndigits = PyList_GET_SIZE(list);
+
+    Py_digit *digits = PyMem_Malloc(ndigits * sizeof(Py_digit));
+    if (digits == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
 
-    Py_digit *digits;
-    PyLongWriter *writer = PyLongWriter_Create((value < 0), 1, &digits);
-    if (writer == NULL) {
-        return NULL;
+    for (Py_ssize_t i=0; i < ndigits; i++) {
+        PyObject *item = PyList_GET_ITEM(list, i);
+
+        long digit = PyLong_AsLong(item);
+        if (digit == -1 && PyErr_Occurred()) {
+            goto error;
+        }
+
+        if (digit < 0 || digit >= PyLong_BASE) {
+            PyErr_SetString(PyExc_ValueError, "digit doesn't fit into Py_digit");
+            goto error;
+        }
+        digits[i] = (Py_digit)digit;
     }
-    digits[0] = ((value >= 0) ? value : -value);
-    return PyLongWriter_Finish(writer);
+
+    Py_digit *writer_digits;
+    PyLongWriter *writer = PyLongWriter_Create(negative, ndigits,
+                                               &writer_digits);
+    if (writer == NULL) {
+        goto error;
+    }
+    memcpy(writer_digits, digits, ndigits * sizeof(digit));
+    PyObject *res = PyLongWriter_Finish(writer);
+    PyMem_Free(digits);
+
+    return res;
+
+error:
+    PyMem_Free(digits);
+    return NULL;
 }
 
 
@@ -280,7 +265,6 @@ static PyMethodDef test_methods[] = {
     {"pylong_fromnativebytes",      pylong_fromnativebytes,     METH_VARARGS},
     {"pylong_getsign",              pylong_getsign,             METH_O},
     {"pylong_aspid",                pylong_aspid,               METH_O},
-    {"pylong_import",               pylong_import,              METH_VARARGS},
     {"pylong_export",               pylong_export,              METH_O},
     {"pylongwriter_create",         pylongwriter_create,        METH_VARARGS},
     {"get_pylong_layout",           get_pylong_layout,          METH_NOARGS},
