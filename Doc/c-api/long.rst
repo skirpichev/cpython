@@ -698,21 +698,3 @@ more efficient import.
 
    On success, return a Python :class:`int` object.
    On error, set an exception and return ``NULL``.
-
-Example with a single digit::
-
-    PyObject*
-    create_integer(int8_t value)
-    {
-        // An int8_t always fit into a single Py_digit
-        assert(-(int)PyLong_BASE <= value && value <= (int)PyLong_BASE);
-
-        Py_digit *digits;
-        PyLongWriter *writer = PyLongWriter_Create((value < 0), 1, &digits);
-        if (writer == NULL) {
-            return NULL;
-        }
-
-        digits[0] = ((value >= 0) ? value : -value);
-        return PyLongWriter_Finish(writer);
-    }
