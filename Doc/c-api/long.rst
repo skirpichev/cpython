@@ -616,7 +616,7 @@ Import/Export API
 
    See :c:struct:`PyLong_LAYOUT` for the :c:member:`digits` layout.
 
-   .. c:member:: PyLongObject *obj
+   .. c:member:: PyObject *obj
 
       Strong reference to the Python :class:`int` object.
 
@@ -628,9 +628,9 @@ Import/Export API
 
       Number of digits in :c:member:`digits` array.
 
-   .. c:member:: Py_digit *digits
+   .. c:member:: const Py_digit *digits
 
-      Array of unsigned digits.
+      Read-only array of unsigned digits.
 
 
 .. c:function:: int PyLong_Export(PyObject *obj, PyLong_DigitArray *array)

@@ -6713,7 +6713,7 @@ PyLong_Export(PyObject *obj, PyLong_DigitArray *array)
     }
     PyLongObject *self = (PyLongObject*)obj;
 
-    array->obj = (PyLongObject*)Py_NewRef(obj);
+    array->obj = Py_NewRef(obj);
     array->negative = _PyLong_IsNegative(self);
     array->ndigits = _PyLong_DigitCount(self);
     if (array->ndigits == 0) {

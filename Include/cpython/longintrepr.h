@@ -169,10 +169,10 @@ PyAPI_FUNC(PyObject*) PyLong_Import(
     Py_digit *digits);
 
 typedef struct PyLong_DigitArray {
-    PyLongObject *obj;
+    PyObject *obj;
     int negative;
     size_t ndigits;
-    Py_digit *digits;
+    const Py_digit *digits;
 } PyLong_DigitArray;
 
 PyAPI_FUNC(int) PyLong_Export(
