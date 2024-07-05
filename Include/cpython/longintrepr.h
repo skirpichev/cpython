@@ -151,7 +151,7 @@ typedef struct PyLongLayout {
     uint8_t digit_size;
 
     // Word endian:
-    // * 1 for most significant byte first (big endian)
+    // * 1 for most significant word first (big endian)
     // * -1 for least significant first (little endian)
     int8_t word_endian;
 
