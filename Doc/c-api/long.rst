@@ -664,8 +664,6 @@ The :c:type:`PyLongWriter` API can be used to import an integer.
 
    See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
 
-   See also the :c:func:`PyLong_Import` function.
-
 
 .. c:function:: PyObject* PyLongWriter_Finish(PyLongWriter *writer)
 
