@@ -661,7 +661,8 @@ The :c:type:`PyLongWriter` API can be used to import an integer.
 
    The caller must initialize the array of digits *digits* and then call
    :c:func:`PyLongWriter_Finish` to get a Python :class:`int`. Digits must be
-   in the range [``0``; ``PyLong_BASE - 1``].
+   in the range [``0``; ``PyLong_BASE - 1``]. Unused digits must be set to
+   ``0``.
 
    See :c:struct:`PyLong_LAYOUT` for the layout of an array of digits.
 
