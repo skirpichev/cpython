@@ -605,7 +605,7 @@ Export API
 
       1 if the number is negative, 0 otherwise.
 
-   .. c:member:: size_t ndigits
+   .. c:member:: Py_ssize_t ndigits
 
       Number of digits in :c:member:`digits` array.
 
@@ -647,7 +647,7 @@ The :c:type:`PyLongWriter` API can be used to import an integer.
    The instance must be destroyed by :c:func:`PyLongWriter_Finish`.
 
 
-.. c:function:: PyLongWriter* PyLongWriter_Create(int negative, size_t ndigits, Py_digit **digits)
+.. c:function:: PyLongWriter* PyLongWriter_Create(int negative, Py_ssize_t ndigits, Py_digit **digits)
 
    Create a :c:type:`PyLongWriter`.
 
@@ -656,7 +656,8 @@ The :c:type:`PyLongWriter` API can be used to import an integer.
 
    *negative* is ``1`` if the number is negative, or ``0`` otherwise.
 
-   *ndigits* is the number of digits in the *digits* array.
+   *ndigits* is the number of digits in the *digits* array. It must be
+   positive.
 
    The caller must initialize the array of digits *digits* and then call
    :c:func:`PyLongWriter_Finish` to get a Python :class:`int`. Digits must be
@@ -676,7 +677,7 @@ The :c:type:`PyLongWriter` API can be used to import an integer.
 Example creating an integer from an array of digits::
 
     PyObject *
-    long_import(int negative, size_t ndigits, Py_digit *digits)
+    long_import(int negative, Py_ssize_t ndigits, Py_digit *digits)
     {
         Py_digit *writer_digits;
         PyLongWriter *writer = PyLongWriter_Create(negative, ndigits,

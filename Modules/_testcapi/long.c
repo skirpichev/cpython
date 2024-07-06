@@ -126,7 +126,7 @@ pylong_export(PyObject *module, PyObject *obj)
     }
 
     PyObject *digits = PyList_New(0);
-    for (size_t i=0; i < array.ndigits; i++) {
+    for (Py_ssize_t i=0; i < array.ndigits; i++) {
         PyObject *digit = PyLong_FromUnsignedLong(array.digits[i]);
         if (digit == NULL) {
             Py_DECREF(digits);

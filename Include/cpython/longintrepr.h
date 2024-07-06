@@ -166,7 +166,7 @@ PyAPI_DATA(const PyLongLayout) PyLong_LAYOUT;
 typedef struct PyLong_DigitArray {
     PyObject *obj;
     int negative;
-    size_t ndigits;
+    Py_ssize_t ndigits;
     const Py_digit *digits;
 } PyLong_DigitArray;
 
@@ -183,7 +183,7 @@ typedef struct PyLongWriter PyLongWriter;
 
 PyAPI_FUNC(PyLongWriter*) PyLongWriter_Create(
     int negative,
-    size_t ndigits,
+    Py_ssize_t ndigits,
     Py_digit **digits);
 PyAPI_FUNC(PyObject*) PyLongWriter_Finish(PyLongWriter *writer);
 
