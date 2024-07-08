@@ -170,10 +170,10 @@ typedef struct PyLong_DigitArray {
     const Py_digit *digits;
 } PyLong_DigitArray;
 
-PyAPI_FUNC(int) PyLong_Export(
+PyAPI_FUNC(int) PyLong_AsDigitArray(
     PyObject *obj,
     PyLong_DigitArray *array);
-PyAPI_FUNC(void) PyLong_ReleaseExport(
+PyAPI_FUNC(void) PyLong_FreeDigitArray(
     PyLong_DigitArray *array);
 
 

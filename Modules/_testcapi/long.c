@@ -121,7 +121,7 @@ static PyObject *
 pylong_export(PyObject *module, PyObject *obj)
 {
     PyLong_DigitArray array;
-    if (PyLong_Export(obj, &array) < 0) {
+    if (PyLong_AsDigitArray(obj, &array) < 0) {
         return NULL;
     }
 
@@ -142,11 +142,11 @@ pylong_export(PyObject *module, PyObject *obj)
     }
 
     PyObject *res = Py_BuildValue("(iN)", array.negative, digits);
-    PyLong_ReleaseExport(&array);
+    PyLong_FreeDigitArray(&array);
     return res;
 
 error:
-    PyLong_ReleaseExport(&array);
+    PyLong_FreeDigitArray(&array);
     return NULL;
 }
 

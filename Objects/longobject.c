@@ -6695,7 +6695,7 @@ const PyLongLayout PyLong_LAYOUT = {
 
 
 int
-PyLong_Export(PyObject *obj, PyLong_DigitArray *array)
+PyLong_AsDigitArray(PyObject *obj, PyLong_DigitArray *array)
 {
     if (!PyLong_Check(obj)) {
         PyErr_Format(PyExc_TypeError, "expect int, got %T", obj);
@@ -6715,7 +6715,7 @@ PyLong_Export(PyObject *obj, PyLong_DigitArray *array)
 
 
 void
-PyLong_ReleaseExport(PyLong_DigitArray *array)
+PyLong_FreeDigitArray(PyLong_DigitArray *array)
 {
     Py_CLEAR(array->obj);
     array->negative = 0;
