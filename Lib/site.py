@@ -532,8 +532,7 @@ def register_readline():
         def write_history():
             try:
                 my_readline.write_history_file(history)
-            except (FileNotFoundError, PermissionError,
-                    _pyrepl.unix_console.InvalidTerminal):
+            except (FileNotFoundError, PermissionError):
                 # home directory does not exist or is not writable
                 # https://bugs.python.org/issue19891
                 # or terminal doesn't have the required capability
