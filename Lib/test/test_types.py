@@ -2402,6 +2402,9 @@ class SubinterpreterTests(unittest.TestCase):
             for slot, own in iter_slot_wrappers(cls):
                 if cls is bool and slot in self.NUMERIC_METHODS:
                     continue
+                if cls is imaginary and slot in ('__abs__', '__bool__',
+                                                 '__pow__', '__rpow__'):
+                    continue
                 slots.append((cls, slot, own))
                 script += textwrap.dedent(f"""
                     text = repr({cls.__name__}.{slot})
