@@ -37,11 +37,35 @@ _Py_c_sum(Py_complex a, Py_complex b)
 }
 
 Py_complex
+_Py_cd_sum(Py_complex a, double b)
+{
+    Py_complex r = a;
+    r.real += b;
+    return r;
+}
+
+Py_complex
 _Py_c_diff(Py_complex a, Py_complex b)
 {
     Py_complex r;
     r.real = a.real - b.real;
     r.imag = a.imag - b.imag;
+    return r;
+}
+
+Py_complex
+_Py_dc_diff(double a, Py_complex b)
+{
+    Py_complex r = {a, -b.imag};
+    r.real -= b.real;
+    return r;
+}
+
+Py_complex
+_Py_cd_diff(Py_complex a, double b)
+{
+    Py_complex r = a;
+    r.real -= b;
     return r;
 }
 
@@ -60,6 +84,15 @@ _Py_c_prod(Py_complex a, Py_complex b)
     Py_complex r;
     r.real = a.real*b.real - a.imag*b.imag;
     r.imag = a.real*b.imag + a.imag*b.real;
+    return r;
+}
+
+Py_complex
+_Py_cd_prod(Py_complex a, double b)
+{
+    Py_complex r = a;
+    r.real *= b;
+    r.imag *= b;
     return r;
 }
 
@@ -148,7 +181,7 @@ _Py_c_quot(Py_complex a, Py_complex b)
 
 /* an equivalent of above function, when 1st argument is real */
 Py_complex
-_Py_c_quot_real(double a, Py_complex b)
+_Py_dc_quot(double a, Py_complex b)
 {
     Py_complex r;
     const double abs_breal = b.real < 0 ? -b.real : b.real;
@@ -177,18 +210,13 @@ _Py_c_quot_real(double a, Py_complex b)
         r.real = r.imag = Py_NAN;
     }
 
-    if (isnan(r.real) && isnan(r.imag)) {
-        if (isinf(a) && isfinite(b.real) && isfinite(b.imag)) {
-            const double x = copysign(1.0, a);
-            r.real = Py_INFINITY * (x*b.real);
-            r.imag = Py_INFINITY * (-x*b.imag);
-        }
-        else if ((isinf(abs_breal) || isinf(abs_bimag)) && isfinite(a)) {
-            const double x = copysign(isinf(b.real) ? 1.0 : 0.0, b.real);
-            const double y = copysign(isinf(b.imag) ? 1.0 : 0.0, b.imag);
-            r.real = 0.0 * (a*x);
-            r.imag = 0.0 * (-a*y);
-        }
+    if (isnan(r.real) && isnan(r.imag) && isfinite(a)
+        && (isinf(abs_breal) || isinf(abs_bimag)))
+    {
+        const double x = copysign(isinf(b.real) ? 1.0 : 0.0, b.real);
+        const double y = copysign(isinf(b.imag) ? 1.0 : 0.0, b.imag);
+        r.real = 0.0 * (a*x);
+        r.imag = 0.0 * (-a*y);
     }
 
     return r;
@@ -196,6 +224,21 @@ _Py_c_quot_real(double a, Py_complex b)
 #ifdef _M_ARM64
 #pragma optimize("", on)
 #endif
+
+Py_complex
+_Py_cd_quot(Py_complex a, double b)
+{
+    Py_complex r = a;
+    if (b) {
+        r.real /= b;
+        r.imag /= b;
+    }
+    else {
+        errno = EDOM;
+        r.real = r.imag = 0.0;
+    }
+    return r;
+}
 
 Py_complex
 _Py_c_pow(Py_complex a, Py_complex b)
@@ -530,7 +573,7 @@ complex_hash(PyComplexObject *v)
         return (obj)
 
 static int
-real_to_float(PyObject **pobj, double *dbl)
+real_to_double(PyObject **pobj, double *dbl)
 {
     PyObject *obj = *pobj;
 
@@ -547,7 +590,7 @@ static int
 real_to_complex(PyObject **pobj, Py_complex *pc)
 {
     pc->imag = 0.0;
-    return real_to_float(pobj, &(pc->real));
+    return real_to_double(pobj, &(pc->real));
 }
 
 /* Complex arithmetic rules implement special mixed-mode cases, i.e. combining
@@ -575,136 +618,70 @@ real_to_complex(PyObject **pobj, Py_complex *pc)
    imaginary op float (5)) should be implemented by an appropriate
    imaginary_op() function. */
 
-static PyObject *
-complex_add(PyObject *v, PyObject *w)
-{
-    if (!PyComplex_Check(v)) {
-        PyObject *tmp = v;
-        v = w;
-        w = tmp;
+#define COMM_BINOP(name, func)                                \
+    static PyObject *                                         \
+    complex_##name(PyObject *v, PyObject *w)                  \
+    {                                                         \
+        if (!PyComplex_Check(v)) {                            \
+            PyObject *tmp = v;                                \
+            v = w;                                            \
+            w = tmp;                                          \
+        }                                                     \
+        Py_complex a = ((PyComplexObject *)(v))->cval;        \
+        double b;                                             \
+        if (PyComplex_Check(w)) {                             \
+            Py_complex b = ((PyComplexObject *)(w))->cval;    \
+            a = _Py_c_##func(a, b);                           \
+        }                                                     \
+        else if (real_to_double(&w, &b) < 0) {                \
+            return w;                                         \
+        }                                                     \
+        else {                                                \
+            a = _Py_cd_##func(a, b);                          \
+        }                                                     \
+        return PyComplex_FromCComplex(a);                     \
     }
 
-    Py_complex a = ((PyComplexObject *)(v))->cval;
-    double b;
+COMM_BINOP(add, sum)
+COMM_BINOP(mul, prod)
 
-    if (PyComplex_Check(w)) {
-        Py_complex b = ((PyComplexObject *)(w))->cval;
-        a = _Py_c_sum(a, b);
-    }
-    else if (real_to_float(&w, &b) < 0) {
-        return w;
-    }
-    else {
-        a.real += b;
-    }
+#define GEN_BINOP(name, func)                                 \
+    static PyObject *                                         \
+    complex_##name(PyObject *v, PyObject *w)                  \
+    {                                                         \
+        Py_complex a;                                         \
+        errno = 0;                                            \
+        if (PyComplex_Check(w)) {                             \
+            Py_complex b = ((PyComplexObject *)(w))->cval;    \
+            if (PyComplex_Check(v)) {                         \
+                a = ((PyComplexObject *)(v))->cval;           \
+                a = _Py_c_##func(a, b);                       \
+            }                                                 \
+            else if (real_to_double(&v, &a.real) < 0) {       \
+                return v;                                     \
+            }                                                 \
+            else {                                            \
+                a = _Py_dc_##func(a.real, b);                 \
+            }                                                 \
+        }                                                     \
+        else {                                                \
+            a = ((PyComplexObject *)(v))->cval;               \
+            double b;                                         \
+            if (real_to_double(&w, &b) < 0) {                 \
+                return w;                                     \
+            }                                                 \
+            a = _Py_cd_##func(a, b);                          \
+        }                                                     \
+        if (errno == EDOM) {                                  \
+            PyErr_SetString(PyExc_ZeroDivisionError,          \
+                            "division by zero");              \
+            return NULL;                                      \
+        }                                                     \
+        return PyComplex_FromCComplex(a);                     \
+   }
 
-    return PyComplex_FromCComplex(a);
-}
-
-static PyObject *
-complex_sub(PyObject *v, PyObject *w)
-{
-    Py_complex a;
-
-    if (PyComplex_Check(w)) {
-        Py_complex b = ((PyComplexObject *)(w))->cval;
-
-        if (PyComplex_Check(v)) {
-            a = ((PyComplexObject *)(v))->cval;
-            errno = 0;
-            a = _Py_c_diff(a, b);
-        }
-        else if (real_to_float(&v, &a.real) < 0) {
-            return v;
-        }
-        else {
-            a.real -= b.real;
-            a.imag = -b.imag;
-        }
-    }
-    else {
-        a = ((PyComplexObject *)(v))->cval;
-        double b;
-
-        if (real_to_float(&w, &b) < 0) {
-            return w;
-        }
-        a.real -= b;
-    }
-
-    return PyComplex_FromCComplex(a);
-}
-
-static PyObject *
-complex_mul(PyObject *v, PyObject *w)
-{
-    if (!PyComplex_Check(v)) {
-        PyObject *tmp = v;
-        v = w;
-        w = tmp;
-    }
-
-    Py_complex a = ((PyComplexObject *)(v))->cval;
-    double b;
-
-    if (PyComplex_Check(w)) {
-        Py_complex b = ((PyComplexObject *)(w))->cval;
-        a = _Py_c_prod(a, b);
-    }
-    else if (real_to_float(&w, &b) < 0) {
-        return w;
-    }
-    else {
-        a.real *= b;
-        a.imag *= b;
-    }
-
-    return PyComplex_FromCComplex(a);
-}
-
-static PyObject *
-complex_div(PyObject *v, PyObject *w)
-{
-    Py_complex a;
-
-    if (PyComplex_Check(w)) {
-        Py_complex b = ((PyComplexObject *)(w))->cval;
-
-        errno = 0;
-
-        if (PyComplex_Check(v)) {
-            a = ((PyComplexObject *)(v))->cval;
-            a = _Py_c_quot(a, b);
-        }
-        else if (real_to_float(&v, &a.real) < 0) {
-            return v;
-        }
-        else {
-            a = _Py_c_quot_real(a.real, b);
-        }
-    }
-    else {
-        double b;
-
-        if (real_to_float(&w, &b) < 0) {
-            return w;
-        }
-        if (b) {
-            a = ((PyComplexObject *)(v))->cval;
-            a.real /= b;
-            a.imag /= b;
-        }
-        else {
-            errno = EDOM;
-        }
-    }
-
-    if (errno == EDOM) {
-        PyErr_SetString(PyExc_ZeroDivisionError, "division by zero");
-        return NULL;
-    }
-    return PyComplex_FromCComplex(a);
-}
+GEN_BINOP(sub, diff)
+GEN_BINOP(div, quot)
 
 static PyObject *
 complex_pow(PyObject *v, PyObject *w, PyObject *z)
@@ -1496,7 +1473,7 @@ imaginary_add(PyObject *v, PyObject *w)
         a += ((PyComplexObject *)(w))->cval.imag;
         b = ((PyComplexObject *)(w))->cval.real;
     }
-    else if (real_to_float(&w, &b) < 0) {
+    else if (real_to_double(&w, &b) < 0) {
         return w;
     }
 
@@ -1518,7 +1495,7 @@ imaginary_sub(PyObject *v, PyObject *w)
             a = ((PyComplexObject *)(v))->cval.real;
             b += ((PyComplexObject *)(v))->cval.imag;
         }
-        else if (real_to_float(&v, &a) < 0) {
+        else if (real_to_double(&v, &a) < 0) {
             return v;
         }
         return PyComplex_FromDoubles(a, b);
@@ -1531,7 +1508,7 @@ imaginary_sub(PyObject *v, PyObject *w)
         a -= ((PyComplexObject *)(w))->cval.imag;
         b = ((PyComplexObject *)(w))->cval.real;
     }
-    else if (real_to_float(&w, &b) < 0) {
+    else if (real_to_double(&w, &b) < 0) {
         return w;
     }
 
@@ -1558,7 +1535,7 @@ imaginary_mul(PyObject *v, PyObject *w)
         a *= ((PyComplexObject *)(w))->cval.real;
         return PyComplex_FromDoubles(b, a);
     }
-    else if (real_to_float(&w, &b) < 0) {
+    else if (real_to_double(&w, &b) < 0) {
         return w;
     }
 
@@ -1581,7 +1558,7 @@ imaginary_div(PyObject *v, PyObject *w)
                 Py_complex a = ((PyComplexObject *)(v))->cval;
                 return PyComplex_FromDoubles(a.imag/b, -a.real/b);
             }
-            if (real_to_float(&v, &a) < 0) {
+            if (real_to_double(&v, &a) < 0) {
                 return v;
             }
             return PyImaginary_FromDouble(-a/b);
@@ -1594,13 +1571,13 @@ imaginary_div(PyObject *v, PyObject *w)
         if (PyComplex_Check(w)) {
             Py_complex b = ((PyComplexObject *)(w))->cval;
             errno = 0;
-            b = _Py_c_quot_real(a, b);
+            b = _Py_dc_quot(a, b);
             b = (Py_complex){-b.imag, b.real};
             if (!errno) {
                 return PyComplex_FromDoubles(b.real, b.imag);
             }
         }
-        else if (real_to_float(&w, &b) < 0) {
+        else if (real_to_double(&w, &b) < 0) {
             return w;
         }
         else if (b) {
