@@ -44,6 +44,12 @@ _Py_cd_sum(Py_complex a, double b)
     return r;
 }
 
+static inline Py_complex
+_Py_dc_sum(double a, Py_complex b)
+{
+    return _Py_cd_sum(b, a);
+}
+
 Py_complex
 _Py_c_diff(Py_complex a, Py_complex b)
 {
@@ -54,18 +60,18 @@ _Py_c_diff(Py_complex a, Py_complex b)
 }
 
 Py_complex
-_Py_dc_diff(double a, Py_complex b)
-{
-    Py_complex r = {a, -b.imag};
-    r.real -= b.real;
-    return r;
-}
-
-Py_complex
 _Py_cd_diff(Py_complex a, double b)
 {
     Py_complex r = a;
     r.real -= b;
+    return r;
+}
+
+Py_complex
+_Py_dc_diff(double a, Py_complex b)
+{
+    Py_complex r = {a, -b.imag};
+    r.real -= b.real;
     return r;
 }
 
@@ -94,6 +100,12 @@ _Py_cd_prod(Py_complex a, double b)
     r.real *= b;
     r.imag *= b;
     return r;
+}
+
+static inline Py_complex
+_Py_dc_prod(double a, Py_complex b)
+{
+    return _Py_cd_prod(b, a);
 }
 
 /* Avoid bad optimization on Windows ARM64 until the compiler is fixed */
@@ -179,7 +191,22 @@ _Py_c_quot(Py_complex a, Py_complex b)
     return r;
 }
 
-/* an equivalent of above function, when 1st argument is real */
+Py_complex
+_Py_cd_quot(Py_complex a, double b)
+{
+    Py_complex r = a;
+    if (b) {
+        r.real /= b;
+        r.imag /= b;
+    }
+    else {
+        errno = EDOM;
+        r.real = r.imag = 0.0;
+    }
+    return r;
+}
+
+/* an equivalent of _Py_c_quot() function, when 1st argument is real */
 Py_complex
 _Py_dc_quot(double a, Py_complex b)
 {
@@ -224,21 +251,6 @@ _Py_dc_quot(double a, Py_complex b)
 #ifdef _M_ARM64
 #pragma optimize("", on)
 #endif
-
-Py_complex
-_Py_cd_quot(Py_complex a, double b)
-{
-    Py_complex r = a;
-    if (b) {
-        r.real /= b;
-        r.imag /= b;
-    }
-    else {
-        errno = EDOM;
-        r.real = r.imag = 0.0;
-    }
-    return r;
-}
 
 Py_complex
 _Py_c_pow(Py_complex a, Py_complex b)
@@ -618,34 +630,7 @@ real_to_complex(PyObject **pobj, Py_complex *pc)
    imaginary op float (5)) should be implemented by an appropriate
    imaginary_op() function. */
 
-#define COMM_BINOP(name, func)                                \
-    static PyObject *                                         \
-    complex_##name(PyObject *v, PyObject *w)                  \
-    {                                                         \
-        if (!PyComplex_Check(v)) {                            \
-            PyObject *tmp = v;                                \
-            v = w;                                            \
-            w = tmp;                                          \
-        }                                                     \
-        Py_complex a = ((PyComplexObject *)(v))->cval;        \
-        double b;                                             \
-        if (PyComplex_Check(w)) {                             \
-            Py_complex b = ((PyComplexObject *)(w))->cval;    \
-            a = _Py_c_##func(a, b);                           \
-        }                                                     \
-        else if (real_to_double(&w, &b) < 0) {                \
-            return w;                                         \
-        }                                                     \
-        else {                                                \
-            a = _Py_cd_##func(a, b);                          \
-        }                                                     \
-        return PyComplex_FromCComplex(a);                     \
-    }
-
-COMM_BINOP(add, sum)
-COMM_BINOP(mul, prod)
-
-#define GEN_BINOP(name, func)                                 \
+#define COMPLEX_BINOP(name, func)                             \
     static PyObject *                                         \
     complex_##name(PyObject *v, PyObject *w)                  \
     {                                                         \
@@ -680,8 +665,10 @@ COMM_BINOP(mul, prod)
         return PyComplex_FromCComplex(a);                     \
    }
 
-GEN_BINOP(sub, diff)
-GEN_BINOP(div, quot)
+COMPLEX_BINOP(add, sum)
+COMPLEX_BINOP(mul, prod)
+COMPLEX_BINOP(sub, diff)
+COMPLEX_BINOP(div, quot)
 
 static PyObject *
 complex_pow(PyObject *v, PyObject *w, PyObject *z)
