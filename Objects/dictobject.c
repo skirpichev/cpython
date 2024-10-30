@@ -4685,7 +4685,7 @@ If the positional argument is present and has a .keys() method,\n\
 then does:\n\
   for k in mapping_or_iterable: self[k] = mapping_or_iterable[k]\n\
 If it is present and lacks a .keys() method, then does:\n\
-  for k, v in mapping_or_iterable: self[k] = v\n\
+  for k, v in mapping_or_iterable.keys(): self[k] = v\n\
 In either case, this is followed by:\n\
   for k in kwargs:  self[k] = kwargs[k]");
 
