@@ -10,7 +10,8 @@ import sys
 import types
 import unittest
 from test.support import (captured_stdout, requires_debug_ranges,
-                          requires_specialization, cpython_only)
+                          requires_specialization, requires_specialization_ft,
+                          cpython_only)
 from test.support.bytecode_helper import BytecodeTestCase
 
 import opcode
@@ -1261,7 +1262,7 @@ class DisTests(DisTestBase):
         self.do_disassembly_compare(got, dis_load_test_quickened_code)
 
     @cpython_only
-    @requires_specialization
+    @requires_specialization_ft
     def test_binary_specialize(self):
         binary_op_quicken = """\
   0           RESUME_CHECK             0
@@ -1281,6 +1282,9 @@ class DisTests(DisTestBase):
         got = self.get_disassembly(co_unicode, adaptive=True)
         self.do_disassembly_compare(got, binary_op_quicken % "BINARY_OP_ADD_UNICODE    0 (+)")
 
+    @cpython_only
+    @requires_specialization
+    def test_binary_subscr_specialize(self):
         binary_subscr_quicken = """\
   0           RESUME_CHECK             0
 
@@ -1330,6 +1334,27 @@ class DisTests(DisTestBase):
         self.code_quicken(lambda: exec(co, {}, {}))
         got = self.get_disassembly(co, adaptive=True)
         self.do_disassembly_compare(got, call_quicken)
+
+    @cpython_only
+    @requires_specialization_ft
+    def test_contains_specialize(self):
+        contains_op_quicken = """\
+  0           RESUME_CHECK             0
+
+  1           LOAD_NAME                0 (a)
+              LOAD_NAME                1 (b)
+              %s
+              RETURN_VALUE
+"""
+        co_dict = compile('a in b', "<dict>", "eval")
+        self.code_quicken(lambda: exec(co_dict, {}, {'a': 1, 'b': {1: 5}}))
+        got = self.get_disassembly(co_dict, adaptive=True)
+        self.do_disassembly_compare(got, contains_op_quicken % "CONTAINS_OP_DICT         0 (in)")
+
+        co_set = compile('a in b', "<set>", "eval")
+        self.code_quicken(lambda: exec(co_set, {}, {'a': 1.0, 'b': {1, 2, 3}}))
+        got = self.get_disassembly(co_set, adaptive=True)
+        self.do_disassembly_compare(got, contains_op_quicken % "CONTAINS_OP_SET          0 (in)")
 
     @cpython_only
     @requires_specialization

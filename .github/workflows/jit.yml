@@ -28,7 +28,7 @@ concurrency:
 jobs:
   interpreter:
     name: Interpreter (Debug)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
           - x86_64-pc-windows-msvc/msvc
           - aarch64-pc-windows-msvc/msvc
           - x86_64-apple-darwin/clang
-          - aarch64-apple-darwin/clang
+          # - aarch64-apple-darwin/clang
           - x86_64-unknown-linux-gnu/gcc
           - x86_64-unknown-linux-gnu/clang
           - aarch64-unknown-linux-gnu/gcc
@@ -79,25 +79,26 @@ jobs:
             architecture: x86_64
             runner: macos-13
             compiler: clang
-          - target: aarch64-apple-darwin/clang
-            architecture: aarch64
-            runner: macos-14
-            compiler: clang
+          # GH-126464: A recent change to either GHA or LLVM broke this job:
+          # - target: aarch64-apple-darwin/clang
+          #   architecture: aarch64
+          #   runner: macos-14
+          #   compiler: clang
           - target: x86_64-unknown-linux-gnu/gcc
             architecture: x86_64
-            runner: ubuntu-latest
+            runner: ubuntu-22.04
             compiler: gcc
           - target: x86_64-unknown-linux-gnu/clang
             architecture: x86_64
-            runner: ubuntu-latest
+            runner: ubuntu-22.04
             compiler: clang
           - target: aarch64-unknown-linux-gnu/gcc
             architecture: aarch64
-            runner: ubuntu-latest
+            runner: ubuntu-22.04
             compiler: gcc
           - target: aarch64-unknown-linux-gnu/clang
             architecture: aarch64
-            runner: ubuntu-latest
+            runner: ubuntu-22.04
             compiler: clang
     env:
       CC: ${{ matrix.compiler }}
@@ -169,7 +170,7 @@ jobs:
   jit-with-disabled-gil:
     name: Free-Threaded (Debug)
     needs: interpreter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         llvm:
