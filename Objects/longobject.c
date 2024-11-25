@@ -3933,7 +3933,7 @@ long_mul(PyLongObject *a, PyLongObject *b)
     Py_ssize_t cutoff = a == b ? KARATSUBA_SQUARE_CUTOFF : KARATSUBA_CUTOFF;
 
     asize = asize > bsize ? bsize : asize;
-
+/*
     if (asize > cutoff) {
         PyObject *mod = PyImport_ImportModule("_pylong");
         if (mod == NULL) {
@@ -3951,7 +3951,7 @@ long_mul(PyLongObject *a, PyLongObject *b)
         }
         return (PyLongObject*)z;
     }
-
+*/
 fallback:
     /* Use gradeschool math when either number is too small. */
     if (asize == 0) {
