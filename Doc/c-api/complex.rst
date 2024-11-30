@@ -52,6 +52,14 @@ pointers.  This is consistent throughout the API.
    .. versionadded:: 3.14
 
 
+.. c:function:: Py_complex _Py_ci_sum(Py_complex left, double right)
+
+   Return the sum of a complex number and an imaginary number, using the C
+   :c:type:`Py_complex` representation.
+
+   .. versionadded:: next
+
+
 .. c:function:: Py_complex _Py_c_diff(Py_complex left, Py_complex right)
 
    Return the difference between two complex numbers, using the C
@@ -74,6 +82,22 @@ pointers.  This is consistent throughout the API.
    .. versionadded:: 3.14
 
 
+.. c:function:: Py_complex _Py_ci_diff(Py_complex left, double right)
+
+   Return the difference between a complex number and an imaginary number,
+   using the C :c:type:`Py_complex` representation.
+
+   .. versionadded:: next
+
+
+.. c:function:: Py_complex _Py_ic_diff(double left, Py_complex right)
+
+   Return the difference between an imaginary number and a complex number,
+   using the C :c:type:`Py_complex` representation.
+
+   .. versionadded:: next
+
+
 .. c:function:: Py_complex _Py_c_neg(Py_complex num)
 
    Return the negation of the complex number *num*, using the C
@@ -92,6 +116,14 @@ pointers.  This is consistent throughout the API.
    :c:type:`Py_complex` representation.
 
    .. versionadded:: 3.14
+
+
+.. c:function:: Py_complex _Py_ci_prod(Py_complex left, double right)
+
+   Return the product of a complex number and an imaginary number, using the C
+   :c:type:`Py_complex` representation.
+
+   .. versionadded:: next
 
 
 .. c:function:: Py_complex _Py_c_quot(Py_complex dividend, Py_complex divisor)
@@ -123,6 +155,28 @@ pointers.  This is consistent throughout the API.
    :c:data:`errno` to :c:macro:`!EDOM`.
 
    .. versionadded:: 3.14
+
+
+.. c:function:: Py_complex _Py_ci_quot(Py_complex dividend, double divisor)
+
+   Return the quotient of a complex number and an imaginary number, using the C
+   :c:type:`Py_complex` representation.
+
+   If *divisor* is zero, this method returns zero and sets
+   :c:data:`errno` to :c:macro:`!EDOM`.
+
+   .. versionadded:: next
+
+
+.. c:function:: Py_complex _Py_ic_quot(double dividend, Py_complex divisor)
+
+   Return the quotient of an imaginary number and a complex number, using the C
+   :c:type:`Py_complex` representation.
+
+   If *divisor* is zero, this method returns zero and sets
+   :c:data:`errno` to :c:macro:`!EDOM`.
+
+   .. versionadded:: next
 
 
 .. c:function:: Py_complex _Py_c_pow(Py_complex num, Py_complex exp)
