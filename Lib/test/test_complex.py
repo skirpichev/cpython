@@ -380,6 +380,22 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         self.assertComplexesAreIdentical((1+0j) * float(1.0), complex(1, 0))
         self.assertComplexesAreIdentical(float(1.0) * (1+0j), complex(1, 0))
 
+        for z, w, r in [(1e300+1j, complex(INF, INF), complex(NAN, INF)),
+                        (1e300+1j, complex(NAN, INF), complex(-INF, INF)),
+                        (1e300+1j, complex(INF, NAN), complex(INF, INF)),
+                        (complex(INF, 1), complex(NAN, INF), complex(NAN, INF)),
+                        (complex(INF, 1), complex(INF, NAN), complex(INF, NAN)),
+                        (complex(NAN, 1), complex(1, INF), complex(-INF, NAN)),
+                        (complex(1, NAN), complex(1, INF), complex(NAN, INF)),
+                        (complex(1e200, NAN), complex(1e200, NAN), complex(INF, NAN)),
+                        (complex(1e200, NAN), complex(NAN, 1e200), complex(NAN, INF)),
+                        (complex(NAN, 1e200), complex(1e200, NAN), complex(NAN, INF)),
+                        (complex(NAN, 1e200), complex(NAN, 1e200), complex(-INF, NAN)),
+                        (complex(NAN, NAN), complex(NAN, NAN), complex(NAN, NAN))]:
+            with self.subTest(z=z, w=w, r=r):
+                self.assertComplexesAreIdentical(z * w, r)
+                self.assertComplexesAreIdentical(w * z, r)
+
     def test_mod(self):
         # % is no longer supported on complex numbers
         with self.assertRaises(TypeError):
@@ -421,6 +437,7 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         self.assertAlmostEqual(pow(1j, 200), 1)
         self.assertRaises(ValueError, pow, 1+1j, 1+1j, 1+1j)
         self.assertRaises(OverflowError, pow, 1e200+1j, 1e200+1j)
+        self.assertRaises(OverflowError, pow, 1e200+1j, 5)
         self.assertRaises(TypeError, pow, 1j, None)
         self.assertRaises(TypeError, pow, None, 1j)
         self.assertAlmostEqual(pow(1j, 0.5), 0.7071067811865476+0.7071067811865475j)
