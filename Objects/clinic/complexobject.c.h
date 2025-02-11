@@ -21,9 +21,9 @@ static PyObject *
 complex_conjugate_impl(PyComplexObject *self);
 
 static PyObject *
-complex_conjugate(PyComplexObject *self, PyObject *Py_UNUSED(ignored))
+complex_conjugate(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
-    return complex_conjugate_impl(self);
+    return complex_conjugate_impl((PyComplexObject *)self);
 }
 
 PyDoc_STRVAR(complex___getnewargs____doc__,
@@ -38,9 +38,9 @@ static PyObject *
 complex___getnewargs___impl(PyComplexObject *self);
 
 static PyObject *
-complex___getnewargs__(PyComplexObject *self, PyObject *Py_UNUSED(ignored))
+complex___getnewargs__(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
-    return complex___getnewargs___impl(self);
+    return complex___getnewargs___impl((PyComplexObject *)self);
 }
 
 PyDoc_STRVAR(complex___format____doc__,
@@ -56,7 +56,7 @@ static PyObject *
 complex___format___impl(PyComplexObject *self, PyObject *format_spec);
 
 static PyObject *
-complex___format__(PyComplexObject *self, PyObject *arg)
+complex___format__(PyObject *self, PyObject *arg)
 {
     PyObject *return_value = NULL;
     PyObject *format_spec;
@@ -66,7 +66,7 @@ complex___format__(PyComplexObject *self, PyObject *arg)
         goto exit;
     }
     format_spec = arg;
-    return_value = complex___format___impl(self, format_spec);
+    return_value = complex___format___impl((PyComplexObject *)self, format_spec);
 
 exit:
     return return_value;
@@ -85,9 +85,9 @@ static PyObject *
 complex___complex___impl(PyComplexObject *self);
 
 static PyObject *
-complex___complex__(PyComplexObject *self, PyObject *Py_UNUSED(ignored))
+complex___complex__(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
-    return complex___complex___impl(self);
+    return complex___complex___impl((PyComplexObject *)self);
 }
 
 PyDoc_STRVAR(complex_new__doc__,
@@ -246,9 +246,9 @@ static PyObject *
 imaginary_conjugate_impl(PyComplexObject *self);
 
 static PyObject *
-imaginary_conjugate(PyComplexObject *self, PyObject *Py_UNUSED(ignored))
+imaginary_conjugate(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
-    return imaginary_conjugate_impl(self);
+    return imaginary_conjugate_impl((PyComplexObject *)self);
 }
 
 PyDoc_STRVAR(imaginary___getnewargs____doc__,
@@ -263,8 +263,8 @@ static PyObject *
 imaginary___getnewargs___impl(PyComplexObject *self);
 
 static PyObject *
-imaginary___getnewargs__(PyComplexObject *self, PyObject *Py_UNUSED(ignored))
+imaginary___getnewargs__(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
-    return imaginary___getnewargs___impl(self);
+    return imaginary___getnewargs___impl((PyComplexObject *)self);
 }
-/*[clinic end generated code: output=90feb509dccfb970 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=4c1905a0b27e7bd1 input=a9049054013a1b77]*/
