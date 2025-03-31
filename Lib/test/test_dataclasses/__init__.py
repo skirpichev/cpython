@@ -2369,7 +2369,6 @@ class TestDocString(unittest.TestCase):
 
         self.assertDocStrEqual(ns['C'].__doc__, "C(x:X,num:int)")
 
-    def test_docstring_with_no_signature(self):
     def test_docstring_with_multi_signature(self):
         # See https://github.com/python/cpython/issues/103449
         class Meta(type):

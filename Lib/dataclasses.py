@@ -1164,7 +1164,7 @@ def _process_class(cls, init, repr, eq, order, unsafe_hash, frozen,
             # In some cases fetching a signature is not possible.
             # But, we surely should not fail in this case.
             doc = '\n'.join(cls.__name__ + str(sig).replace(' -> None', '')
-                            for sig in inspect.signatures(cls))
+                            for sig in inspect.signatures(cls, annotation_format=annotationlib.Format.FORWARDREF))
         except (TypeError, ValueError):
             doc = cls.__name__
         cls.__doc__ = doc
