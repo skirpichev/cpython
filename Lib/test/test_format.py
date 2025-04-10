@@ -603,10 +603,15 @@ class FormatTest(unittest.TestCase):
         self.assertEqual(f"{-1.:+z.0f}", "-1")
         self.assertEqual(f"{-1.:-z.0f}", "-1")
 
-        self.assertEqual(f"{0.j:z.1f}", "0.0+0.0j")
-        self.assertEqual(f"{-0.j:z.1f}", "0.0+0.0j")
-        self.assertEqual(f"{.01j:z.1f}", "0.0+0.0j")
-        self.assertEqual(f"{-.01j:z.1f}", "0.0+0.0j")
+        self.assertEqual(f"{0.0+0.j:z.1f}", "0.0+0.0j")
+        self.assertEqual(f"{0.0-0.j:z.1f}", "0.0+0.0j")
+        self.assertEqual(f"{0.0+.01j:z.1f}", "0.0+0.0j")
+        self.assertEqual(f"{0.0-.01j:z.1f}", "0.0+0.0j")
+
+        self.assertEqual(f"{0.j:z.1f}", "0.0j")
+        self.assertEqual(f"{-0.j:z.1f}", "0.0j")
+        self.assertEqual(f"{.01j:z.1f}", "0.0j")
+        self.assertEqual(f"{-.01j:z.1f}", "0.0j")
 
         self.assertEqual(f"{-0.:z>6.1f}", "zz-0.0")  # test fill, esp. 'z' fill
         self.assertEqual(f"{-0.:z>z6.1f}", "zzz0.0")

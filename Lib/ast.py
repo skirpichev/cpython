@@ -70,7 +70,7 @@ def literal_eval(node_or_string):
             msg += f' on line {lno}'
         raise ValueError(msg + f': {node!r}')
     def _convert_num(node):
-        if not isinstance(node, Constant) or type(node.value) not in (int, float, complex):
+        if not isinstance(node, Constant) or type(node.value) not in (int, float, imaginary, complex):
             _raise_malformed_node(node)
         return node.value
     def _convert_signed_num(node):
