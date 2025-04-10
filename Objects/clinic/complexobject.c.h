@@ -114,9 +114,11 @@ complex_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     static struct {
         PyGC_Head _this_is_not_used;
         PyObject_VAR_HEAD
+        Py_hash_t ob_hash;
         PyObject *ob_item[NUM_KEYWORDS];
     } _kwtuple = {
         .ob_base = PyVarObject_HEAD_INIT(&PyTuple_Type, NUM_KEYWORDS)
+        .ob_hash = -1,
         .ob_item = { &_Py_ID(real), &_Py_ID(imag), },
     };
     #undef NUM_KEYWORDS
@@ -171,6 +173,19 @@ PyDoc_STRVAR(complex_from_number__doc__,
 #define COMPLEX_FROM_NUMBER_METHODDEF    \
     {"from_number", (PyCFunction)complex_from_number, METH_O|METH_CLASS, complex_from_number__doc__},
 
+static PyObject *
+complex_from_number_impl(PyTypeObject *type, PyObject *number);
+
+static PyObject *
+complex_from_number(PyObject *type, PyObject *number)
+{
+    PyObject *return_value = NULL;
+
+    return_value = complex_from_number_impl((PyTypeObject *)type, number);
+
+    return return_value;
+}
+
 PyDoc_STRVAR(imaginary_new__doc__,
 "imaginary(x=0)\n"
 "--\n"
@@ -192,9 +207,11 @@ imaginary_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     static struct {
         PyGC_Head _this_is_not_used;
         PyObject_VAR_HEAD
+        Py_hash_t ob_hash;
         PyObject *ob_item[NUM_KEYWORDS];
     } _kwtuple = {
         .ob_base = PyVarObject_HEAD_INIT(&PyTuple_Type, NUM_KEYWORDS)
+        .ob_hash = -1,
         .ob_item = { _Py_LATIN1_CHR('x'), },
     };
     #undef NUM_KEYWORDS
@@ -267,4 +284,4 @@ imaginary___getnewargs__(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
     return imaginary___getnewargs___impl((PyComplexObject *)self);
 }
-/*[clinic end generated code: output=4c1905a0b27e7bd1 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=4448bc53f794a795 input=a9049054013a1b77]*/
