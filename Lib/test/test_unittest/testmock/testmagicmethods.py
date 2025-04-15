@@ -273,7 +273,7 @@ class TestMockingMagicMethods(unittest.TestCase):
     def test_asyncmock_defaults(self):
         mock = AsyncMock()
         self.assertEqual(int(mock), 1)
-        self.assertEqual(complex(mock), 1j)
+        self.assertEqual(complex(mock), 1+1j)
         self.assertEqual(float(mock), 1.0)
         self.assertNotIn(object(), mock)
         self.assertEqual(len(mock), 0)
@@ -299,7 +299,7 @@ class TestMockingMagicMethods(unittest.TestCase):
     def test_magicmock_defaults(self):
         mock = MagicMock()
         self.assertEqual(int(mock), 1)
-        self.assertEqual(complex(mock), 1j)
+        self.assertEqual(complex(mock), 1+1j)
         self.assertEqual(float(mock), 1.0)
         self.assertNotIn(object(), mock)
         self.assertEqual(len(mock), 0)
