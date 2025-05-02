@@ -2980,64 +2980,22 @@ static PyObject *
 math_pow_impl(PyObject *module, double x, double y)
 /*[clinic end generated code: output=fff93e65abccd6b0 input=c26f1f6075088bfd]*/
 {
-    double r;
-    int odd_y;
+    errno = 0;
 
-    /* deal directly with IEEE specials, to cope with problems on various
-       platforms whose semantics don't exactly match C99 */
-    r = 0.; /* silence compiler warning */
-    if (!isfinite(x) || !isfinite(y)) {
-        errno = 0;
-        if (isnan(x))
-            r = y == 0. ? 1. : x; /* NaN**0 = 1 */
-        else if (isnan(y))
-            r = x == 1. ? 1. : y; /* 1**NaN = 1 */
-        else if (isinf(x)) {
-            odd_y = isfinite(y) && fmod(fabs(y), 2.0) == 1.0;
-            if (y > 0.)
-                r = odd_y ? x : fabs(x);
-            else if (y == 0.)
-                r = 1.;
-            else /* y < 0. */
-                r = odd_y ? copysign(0., x) : 0.;
-        }
-        else {
-            assert(isinf(y));
-            if (fabs(x) == 1.0)
-                r = 1.;
-            else if (y > 0. && fabs(x) > 1.0)
-                r = y;
-            else if (y < 0. && fabs(x) < 1.0) {
-                r = -y; /* result is +inf */
-            }
-            else
-                r = 0.;
-        }
-    }
-    else {
-        /* let libm handle finite**finite */
-        errno = 0;
-        r = pow(x, y);
+    double r = pow(x, y);
+
+    if (isfinite(x) && isfinite(y)) {
         /* a NaN result should arise only from (-ve)**(finite
            non-integer); in this case we want to raise ValueError. */
         if (!isfinite(r)) {
-            if (isnan(r)) {
-                errno = EDOM;
-            }
-            /*
-               an infinite result here arises either from:
-               (A) (+/-0.)**negative (-> divide-by-zero)
-               (B) overflow of x**y with x and y finite
+            /* an infinite result here arises from:
+               (+/-0.)**negative (-> divide-by-zero)
             */
-            else if (isinf(r)) {
-                if (x == 0.)
-                    errno = EDOM;
-                else
-                    errno = ERANGE;
+            if (!x && isinf(r)) {
+                errno = EDOM;
             }
         }
     }
-
     if (errno && is_error(r, 1))
         return NULL;
     else
