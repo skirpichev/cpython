@@ -996,11 +996,12 @@ Imaginary literals are described by the following lexical definitions:
 .. productionlist:: python-grammar
    imagnumber: (`floatnumber` | `digitpart`) ("j" | "J")
 
-An imaginary literal yields a complex number with a real part of 0.0.  Complex
-numbers are represented as a pair of floating-point numbers and have the same
-restrictions on their range.  To create a complex number with a nonzero real
-part, add a floating-point number to it, e.g., ``(3+4j)``.  Some examples of
-imaginary literals::
+An imaginary literal yields a complex number without a real part, an instance
+of :class:`imaginary`.  Complex numbers are represented as a pair of
+floating-point numbers and have the same restrictions on their range.  To
+create a complex number with a nonzero real part, add an integer or
+floating-point number to imaginary, e.g., ``3+4j``.  Some examples of imaginary
+literals::
 
    3.14j   10.j    10j     .001j   1e100j   3.14e-10j   3.14_15_93j
 

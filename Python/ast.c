@@ -163,6 +163,7 @@ validate_constant(PyObject *value)
     if (PyLong_CheckExact(value)
             || PyFloat_CheckExact(value)
             || PyComplex_CheckExact(value)
+            || PyImaginary_CheckExact(value)
             || PyBool_Check(value)
             || PyUnicode_CheckExact(value)
             || PyBytes_CheckExact(value))
@@ -420,7 +421,7 @@ ensure_literal_number(expr_ty exp, bool allow_real, bool allow_imaginary)
     PyObject *value = exp->v.Constant.value;
     return (allow_real && PyFloat_CheckExact(value)) ||
            (allow_real && PyLong_CheckExact(value)) ||
-           (allow_imaginary && PyComplex_CheckExact(value));
+           (allow_imaginary && PyImaginary_CheckExact(value));
 }
 
 static int
@@ -500,7 +501,7 @@ validate_pattern_match_value(expr_ty exp)
             PyObject *literal = exp->v.Constant.value;
             if (PyLong_CheckExact(literal) || PyFloat_CheckExact(literal) ||
                 PyBytes_CheckExact(literal) || PyComplex_CheckExact(literal) ||
-                PyUnicode_CheckExact(literal)) {
+                PyImaginary_CheckExact(literal) || PyUnicode_CheckExact(literal)) {
                 return 1;
             }
             PyErr_SetString(PyExc_ValueError,
