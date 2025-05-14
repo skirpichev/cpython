@@ -785,12 +785,12 @@ class BaseBytesTest:
             ('%X format: an integer is required, not float', b'%X', 2.11),
             ('%o format: an integer is required, not float', b'%o', 1.79),
             ('%x format: an integer is required, not PseudoFloat', b'%x', pi),
-            ('%x format: an integer is required, not complex', b'%x', 3j),
-            ('%X format: an integer is required, not complex', b'%X', 2j),
-            ('%o format: an integer is required, not complex', b'%o', 1j),
-            ('%u format: a real number is required, not complex', b'%u', 3j),
-            ('%i format: a real number is required, not complex', b'%i', 2j),
-            ('%d format: a real number is required, not complex', b'%d', 2j),
+            ('%x format: an integer is required, not complex', b'%x', 1+3j),
+            ('%X format: an integer is required, not complex', b'%X', 1+2j),
+            ('%o format: an integer is required, not complex', b'%o', 1+1j),
+            ('%u format: a real number is required, not complex', b'%u', 1+3j),
+            ('%i format: a real number is required, not complex', b'%i', 1+2j),
+            ('%d format: a real number is required, not complex', b'%d', 1+2j),
             (
                 r'%c requires an integer in range\(256\)'
                 r' or a single byte, not .*\.PseudoFloat',
