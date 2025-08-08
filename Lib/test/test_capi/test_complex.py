@@ -185,7 +185,7 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
 
     def test_py_ci_sum(self):
         # Test _Py_cr_sum()
-        _py_ci_sum = _testcapi._py_ci_sum
+        _py_ci_sum = _testinternalcapi._py_ci_sum
 
         self.assertComplexesAreIdentical(_py_ci_sum(-0.0 - 0j, -0.0)[0],
                                          complex(-0.0, -0.0))
@@ -205,7 +205,7 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
 
     def test_py_ci_diff(self):
         # Test _Py_ci_diff()
-        _py_ci_diff = _testcapi._py_ci_diff
+        _py_ci_diff = _testinternalcapi._py_ci_diff
 
         self.assertComplexesAreIdentical(_py_ci_diff(-0.0 - 0j, 0.0)[0],
                                          complex(-0.0, -0.0))
@@ -219,7 +219,7 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
 
     def test_py_ic_diff(self):
         # Test _Py_ic_diff()
-        _py_ic_diff = _testcapi._py_ic_diff
+        _py_ic_diff = _testinternalcapi._py_ic_diff
 
         self.assertComplexesAreIdentical(_py_ic_diff(-0.0, 0j)[0],
                                          complex(-0.0, -0.0))
@@ -245,7 +245,7 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
 
     def test_py_ci_prod(self):
         # Test _Py_ci_prod()
-        _py_ci_prod = _testcapi._py_ci_prod
+        _py_ci_prod = _testinternalcapi._py_ci_prod
 
         self.assertComplexesAreIdentical(_py_ci_prod(complex('inf+1j'), INF)[0],
                                                      complex('-inf+infj'))
@@ -281,7 +281,7 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
 
     def test_py_ci_quot(self):
         # Test _Py_ci_quot()
-        _py_ci_quot = _testcapi._py_ci_quot
+        _py_ci_quot = _testinternalcapi._py_ci_quot
 
         self.assertComplexesAreIdentical(_py_ci_quot(complex('1+infj'), 2**1000)[0],
                                          INF - 2**-1000*1j)
@@ -295,7 +295,7 @@ class CAPIComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
 
     def test_py_ic_quot(self):
         # Test _Py_ic_quot()
-        _py_ic_quot = _testcapi._py_ic_quot
+        _py_ic_quot = _testinternalcapi._py_ic_quot
 
         self.assertComplexesAreIdentical(_py_ic_quot(1.0, complex('inf-nanj'))[0],
                                          -0.0)
