@@ -1917,6 +1917,7 @@ class Decimal(object):
     def _power_modulo(self, other, modulo, context=None):
         """Three argument version of __pow__"""
 
+        self = _convert_other(self)
         other = _convert_other(other)
         if other is NotImplemented:
             return other
@@ -2272,7 +2273,7 @@ class Decimal(object):
         """
 
         if modulo is not None:
-            return self._power_modulo(other, modulo, context)
+            return Decimal._power_modulo(self, other, modulo, context)
 
         other = _convert_other(other)
         if other is NotImplemented:

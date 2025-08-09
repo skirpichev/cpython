@@ -4554,12 +4554,7 @@ class Coverage:
             # three arg power
             self.assertEqual(pow(Decimal(10), 2, 7), 2)
             self.assertEqual(pow(10, Decimal(2), 7), 2)
-            if self.decimal == C:
-                self.assertEqual(pow(10, 2, Decimal(7)), 2)
-            else:
-                # XXX: There is no special method to dispatch on the
-                # third arg of three-arg power.
-                self.assertRaises(TypeError, pow, 10, 2, Decimal(7))
+            self.assertEqual(pow(10, 2, Decimal(7)), 2)
             # exp
             self.assertEqual(Decimal("1.01").exp(), 3)
             # is_normal

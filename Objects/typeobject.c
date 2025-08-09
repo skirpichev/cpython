@@ -10377,7 +10377,31 @@ slot_nb_power(PyObject *self, PyObject *other, PyObject *modulus)
         stack[2] = modulus;
         return vectorcall_maybe(tstate, &_Py_ID(__rpow__), stack, 3);
     }
-    Py_RETURN_NOTIMPLEMENTED;
+    stack[0] = self;
+    stack[1] = other;
+    stack[2] = modulus;
+
+    _PyCStackRef cref;
+    _PyThreadState_PushCStackRef(tstate, &cref);
+    int unbound = lookup_maybe_method(modulus, &_Py_ID(__pow__), &cref.ref);
+    PyObject *func = PyStackRef_AsPyObjectBorrow(cref.ref);
+
+    if (func == NULL) {
+        _PyThreadState_PopCStackRef(tstate, &cref);
+        if (!PyErr_Occurred()) {
+            Py_RETURN_NOTIMPLEMENTED;
+        }
+        return NULL;
+    }
+
+    PyObject *retval = vectorcall_unbound(tstate, unbound, func, stack, 3);
+
+    _PyThreadState_PopCStackRef(tstate, &cref);
+    if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_Clear();
+        Py_RETURN_NOTIMPLEMENTED;
+    }
+    return retval;
 }
 
 SLOT0(slot_nb_negative, __neg__)

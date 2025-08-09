@@ -21,6 +21,10 @@ class BadDescr:
 
 class WithDunder:
     def _meth(self, *args):
+        for a in args:
+            if issubclass(a, WithDunder):
+                self = a
+                break
         if self.val:
             return self.val
         if self.exc:
