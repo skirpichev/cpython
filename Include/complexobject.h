@@ -9,14 +9,20 @@ extern "C" {
 /* Complex object interface */
 
 PyAPI_DATA(PyTypeObject) PyComplex_Type;
+PyAPI_DATA(PyTypeObject) PyImaginary_Type;
 
 #define PyComplex_Check(op) PyObject_TypeCheck((op), &PyComplex_Type)
 #define PyComplex_CheckExact(op) Py_IS_TYPE((op), &PyComplex_Type)
+
+#define PyImaginary_Check(op) PyObject_TypeCheck((op), &PyImaginary_Type)
+#define PyImaginary_CheckExact(op) Py_IS_TYPE((op), &PyImaginary_Type)
 
 PyAPI_FUNC(PyObject *) PyComplex_FromDoubles(double real, double imag);
 
 PyAPI_FUNC(double) PyComplex_RealAsDouble(PyObject *op);
 PyAPI_FUNC(double) PyComplex_ImagAsDouble(PyObject *op);
+
+PyAPI_FUNC(PyObject *) PyImaginary_FromDouble(double imag);
 
 #ifndef Py_LIMITED_API
 #  define Py_CPYTHON_COMPLEXOBJECT_H
