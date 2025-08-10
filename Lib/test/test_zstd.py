@@ -1239,7 +1239,7 @@ class ZstdDictTestCase(unittest.TestCase):
             ZstdDict(desk333=345)
 
     def test_invalid_dict(self):
-        DICT_MAGIC = 0xEC30A437.to_bytes(4, byteorder='little')
+        DICT_MAGIC = (0xEC30A437).to_bytes(4, byteorder='little')
         dict_content = DICT_MAGIC + b'abcdefghighlmnopqrstuvwxyz'
 
         # corrupted

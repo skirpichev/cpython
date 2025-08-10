@@ -1265,6 +1265,9 @@ The ``e`` or ``E`` represents "times ten raised to the power of"::
    1.166e-5  # (represents 1.166×10⁻⁵, or 0.00001166)
    6.02214076e+23  # (represents 6.02214076×10²³, or 602214076000000000000000.)
 
+The exponent of a hexadecimal floating point literal is written in decimal, and
+it gives the power of 2 by which to multiply the coefficient.
+
 In floats with only integer and exponent parts, the decimal point may be
 omitted::
 
@@ -1281,11 +1284,20 @@ lexical definitions:
       | `digitpart` "." [`digitpart`] [`exponent`]
       | "." `digitpart` [`exponent`]
       | `digitpart` `exponent`
+      | `hexfloat`
    digitpart: `digit` (["_"] `digit`)*
    exponent:  ("e" | "E") ["+" | "-"] `digitpart`
+   hexfloat: ("0x | "0X") ["_"] (`hexdigitpart` | `hexpointfloat`) [`binexponent`]
+   hexpointfloat: [`hexdigit`] `hexfraction` | `hexdigitpart` "."
+   hexfraction: "." `hexdigitpart`
+   hexdigitpart: `hexdigit` (["_"] `hexdigit`)*
+   binexponent: ("p" | "P") ["+" | "-"] `digitpart`
 
 .. versionchanged:: 3.6
    Underscores are now allowed for grouping purposes in literals.
+
+.. versionchanged:: next
+   Added support for hexadecimal floating-point literals.
 
 
 .. index::
