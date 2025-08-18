@@ -20,6 +20,7 @@ Objects/classobject.c	-	PyInstanceMethod_Type	-
 Objects/classobject.c	-	PyMethod_Type	-
 Objects/codeobject.c	-	PyCode_Type	-
 Objects/complexobject.c	-	PyComplex_Type	-
+Objects/complexobject.c	-	PyImaginary_Type	-
 Objects/descrobject.c	-	PyClassMethodDescr_Type	-
 Objects/descrobject.c	-	PyDictProxy_Type	-
 Objects/descrobject.c	-	PyGetSetDescr_Type	-

@@ -617,7 +617,7 @@ parsenumber_raw(const char *s)
     const char *end;
     long x;
     double dx;
-    Py_complex compl;
+    double imag;
     int imflag;
 
     assert(s != NULL);
@@ -641,12 +641,11 @@ parsenumber_raw(const char *s)
     }
     /* XXX Huge floats may silently fail */
     if (imflag) {
-        compl.real = 0.;
-        compl.imag = PyOS_string_to_double(s, (char **)&end, NULL);
-        if (compl.imag == -1.0 && PyErr_Occurred()) {
+        imag = PyOS_string_to_double(s, (char **)&end, NULL);
+        if (imag == -1.0 && PyErr_Occurred()) {
             return NULL;
         }
-        return PyComplex_FromCComplex(compl);
+        return PyImaginary_FromDouble(imag);
     }
     dx = PyOS_string_to_double(s, NULL, NULL);
     if (dx == -1.0 && PyErr_Occurred()) {
