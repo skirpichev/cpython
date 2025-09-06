@@ -839,7 +839,7 @@ _PyPegen_seq_delete_starred_exprs(Parser *p, asdl_seq *kwargs)
 expr_ty
 _PyPegen_ensure_imaginary(Parser *p, expr_ty exp)
 {
-    if (exp->kind != Constant_kind || !PyComplex_CheckExact(exp->v.Constant.value)) {
+    if (exp->kind != Constant_kind || !PyImaginary_CheckExact(exp->v.Constant.value)) {
         RAISE_SYNTAX_ERROR_KNOWN_LOCATION(exp, "imaginary number required in complex literal");
         return NULL;
     }
@@ -849,7 +849,8 @@ _PyPegen_ensure_imaginary(Parser *p, expr_ty exp)
 expr_ty
 _PyPegen_ensure_real(Parser *p, expr_ty exp)
 {
-    if (exp->kind != Constant_kind || PyComplex_CheckExact(exp->v.Constant.value)) {
+    if (exp->kind != Constant_kind || (PyComplex_CheckExact(exp->v.Constant.value)
+                                       || PyImaginary_CheckExact(exp->v.Constant.value))) {
         RAISE_SYNTAX_ERROR_KNOWN_LOCATION(exp, "real number required in complex literal");
         return NULL;
     }

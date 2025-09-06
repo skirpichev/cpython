@@ -330,7 +330,7 @@ Constants
 .. data:: infj
 
    Complex number with zero real part and positive infinity imaginary
-   part. Equivalent to ``complex(0.0, float('inf'))``.
+   part. Equivalent to ``float('inf')*1j``.
 
    .. versionadded:: 3.6
 
@@ -346,7 +346,7 @@ Constants
 .. data:: nanj
 
    Complex number with zero real part and NaN imaginary part. Equivalent to
-   ``complex(0.0, float('nan'))``.
+   ``float('nan')*1j``.
 
    .. versionadded:: 3.6
 
