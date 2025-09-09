@@ -101,7 +101,7 @@ def copy(x):
 
 
 _copy_atomic_types = frozenset({types.NoneType, int, float, bool, complex, str, tuple,
-          bytes, frozenset, type, range, slice, property,
+          imaginary, bytes, frozenset, type, range, slice, property,
           types.BuiltinFunctionType, types.EllipsisType,
           types.NotImplementedType, types.FunctionType, types.CodeType,
           weakref.ref, super})
@@ -164,7 +164,8 @@ def deepcopy(x, memo=None):
 
 _atomic_types = frozenset({types.NoneType, types.EllipsisType, types.NotImplementedType,
           int, float, bool, complex, bytes, str, types.CodeType, type, range,
-          types.BuiltinFunctionType, types.FunctionType, weakref.ref, property})
+          types.BuiltinFunctionType, types.FunctionType, weakref.ref,
+          property, imaginary})
 
 _deepcopy_dispatch = d = {}
 

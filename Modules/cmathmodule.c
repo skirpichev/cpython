@@ -1190,15 +1190,13 @@ cmath_exec(PyObject *mod)
         return -1;
     }
 
-    Py_complex infj = {0.0, Py_INFINITY};
-    if (PyModule_Add(mod, "infj", PyComplex_FromCComplex(infj)) < 0) {
+    if (PyModule_Add(mod, "infj", PyImaginary_FromDouble(Py_INFINITY)) < 0) {
         return -1;
     }
     if (PyModule_Add(mod, "nan", PyFloat_FromDouble(fabs(Py_NAN))) < 0) {
         return -1;
     }
-    Py_complex nanj = {0.0, fabs(Py_NAN)};
-    if (PyModule_Add(mod, "nanj", PyComplex_FromCComplex(nanj)) < 0) {
+    if (PyModule_Add(mod, "nanj", PyImaginary_FromDouble(fabs(Py_NAN))) < 0) {
         return -1;
     }
 

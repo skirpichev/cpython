@@ -342,6 +342,8 @@ SYMBOL_NAMES = (
     "PyGILState_GetThisThreadState",
     "PyGILState_Release",
     "PyGetSetDescr_Type",
+    "PyImaginary_FromDouble",
+    "PyImaginary_Type",
     "PyImport_AddModule",
     "PyImport_AddModuleObject",
     "PyImport_AddModuleRef",

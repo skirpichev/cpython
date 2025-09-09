@@ -317,7 +317,8 @@ class BugsTestCase(unittest.TestCase):
         #   >>> class Int(int): pass
         #   >>> type(loads(dumps(Int())))
         #   <type 'int'>
-        for typ in (int, float, complex, tuple, list, dict, set, frozenset):
+        for typ in (int, float, complex, tuple, list, dict, set, frozenset,
+                    imaginary):
             # Note: str subclasses are not tested because they get handled
             # by marshal's routines for objects supporting the buffer API.
             subtyp = type('subtyp', (typ,), {})
@@ -371,7 +372,7 @@ class BugsTestCase(unittest.TestCase):
                 if n is not None and n > 4:
                     n += 10**6
                 return n
-        for value in (1.0, 1j, b'0123456789', '0123456789'):
+        for value in (1.0, 1j, 1+1j, b'0123456789', '0123456789'):
             self.assertRaises(ValueError, marshal.load,
                               BadReader(marshal.dumps(value)))
 
@@ -627,7 +628,7 @@ class CAPI_TestCase(unittest.TestCase, HelperMixin):
             self.assertEqual(data, b'\x78\x56\x34\x12')
 
     def test_write_object_to_file(self):
-        obj = ('\u20ac', b'abc', 123, 45.6, 7+8j, 'long line '*1000)
+        obj = ('\u20ac', b'abc', 123, 45.6, 7+8j, 122j, 'long line '*1000)
         for v in range(marshal.version + 1):
             _testcapi.pymarshal_write_object_to_file(obj, os_helper.TESTFN, v)
             with open(os_helper.TESTFN, 'rb') as f:
@@ -664,7 +665,7 @@ class CAPI_TestCase(unittest.TestCase, HelperMixin):
         os_helper.unlink(os_helper.TESTFN)
 
     def test_read_last_object_from_file(self):
-        obj = ('\u20ac', b'abc', 123, 45.6, 7+8j)
+        obj = ('\u20ac', b'abc', 123, 45.6, 7+8j, 666j)
         for v in range(marshal.version + 1):
             data = marshal.dumps(obj, v)
             with open(os_helper.TESTFN, 'wb') as f:
@@ -680,7 +681,7 @@ class CAPI_TestCase(unittest.TestCase, HelperMixin):
             os_helper.unlink(os_helper.TESTFN)
 
     def test_read_object_from_file(self):
-        obj = ('\u20ac', b'abc', 123, 45.6, 7+8j)
+        obj = ('\u20ac', b'abc', 123, 45.6, 7+8j, 1j)
         for v in range(marshal.version + 1):
             data = marshal.dumps(obj, v)
             with open(os_helper.TESTFN, 'wb') as f:
