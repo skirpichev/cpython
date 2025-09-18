@@ -455,15 +455,8 @@ cmath_cosh_impl(PyObject *module, Py_complex z)
    finite y */
 static Py_complex exp_special_values[7][7];
 
-/*[clinic input]
-cmath.exp = cmath.acos
-
-Return the exponential value e**z.
-[clinic start generated code]*/
-
-static Py_complex
-cmath_exp_impl(PyObject *module, Py_complex z)
-/*[clinic end generated code: output=edcec61fb9dfda6c input=8b9e6cf8a92174c3]*/
+Py_complex
+_Py_c_exp(Py_complex z)
 {
     Py_complex r;
     double l;
@@ -512,10 +505,23 @@ cmath_exp_impl(PyObject *module, Py_complex z)
     return r;
 }
 
-static Py_complex log_special_values[7][7];
+/*[clinic input]
+cmath.exp = cmath.acos
+
+Return the exponential value e**z.
+[clinic start generated code]*/
 
 static Py_complex
-c_log(Py_complex z)
+cmath_exp_impl(PyObject *module, Py_complex z)
+/*[clinic end generated code: output=edcec61fb9dfda6c input=8b9e6cf8a92174c3]*/
+{
+    return _Py_c_exp(z);
+}
+
+static Py_complex log_special_values[7][7];
+
+Py_complex
+_Py_c_log(Py_complex z)
 {
     /*
        The usual formula for the real part is log(hypot(z.real, z.imag)).
@@ -597,7 +603,7 @@ cmath_log10_impl(PyObject *module, Py_complex z)
     Py_complex r;
     int errno_save;
 
-    r = c_log(z);
+    r = _Py_c_log(z);
     errno_save = errno; /* just in case the divisions affect errno */
     r.real = r.real / M_LN10;
     r.imag = r.imag / M_LN10;
@@ -879,13 +885,13 @@ cmath_log_impl(PyObject *module, Py_complex x, PyObject *y_obj)
     Py_complex y;
 
     errno = 0;
-    x = c_log(x);
+    x = _Py_c_log(x);
     if (y_obj != NULL) {
         y = PyComplex_AsCComplex(y_obj);
         if (PyErr_Occurred()) {
             return NULL;
         }
-        y = c_log(y);
+        y = _Py_c_log(y);
         x = _Py_c_quot(x, y);
     }
     if (errno != 0)
