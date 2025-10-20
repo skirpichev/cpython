@@ -33,11 +33,10 @@ are always available.  They are listed here in alphabetical order.
 | |  :func:`complex`      | |                     | |  **P**              | |  **V**                |
 | |                       | |  **I**              | |  :func:`pow`        | |  :func:`vars`         |
 | |  **D**                | |  :func:`id`         | |  :func:`print`      | |                       |
-| |  :func:`delattr`      | |  :func:`imaginary`  | |  :func:`property`   | |                       |
-| |  |func-dict|_         | |  :func:`input`      | |                     | |  **Z**                |
-| |  :func:`dir`          | |  :func:`int`        | |                     | |  :func:`zip`          |
-| |  :func:`divmod`       | |  :func:`isinstance` | |                     | |                       |
-| |                       | |  :func:`issubclass` | |                     | |  **_**                |
+| |  :func:`delattr`      | |  :func:`input`      | |  :func:`property`   | |  **Z**                |
+| |  |func-dict|_         | |  :func:`int`        | |                     | |  :func:`zip`          |
+| |  :func:`dir`          | |  :func:`isinstance` | |                     | |                       |
+| |  :func:`divmod`       | |  :func:`issubclass` | |                     | |  **_**                |
 | |                       | |  :func:`iter`       | |                     | |  :func:`__import__`   |
 +-------------------------+-----------------------+-----------------------+-------------------------+
 
@@ -967,14 +966,6 @@ are always available.  They are listed here in alphabetical order.
    .. impl-detail:: This is the address of the object in memory.
 
    .. audit-event:: builtins.id id id
-
-
-.. class:: imaginary(x=0.0)
-
-   Return an imaginary number with the value ``float(x)*1j``.  If argument is
-   omitted, returns ``0j``.
-
-   .. versionadded:: next
 
 
 .. function:: input()

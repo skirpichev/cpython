@@ -1363,8 +1363,7 @@ Imaginary literals
 
 Python has :ref:`complex number <typesnumeric>` objects, but no complex
 literals.
-Instead, *imaginary literals* denote complex numbers without a real part, an instance
-of :class:`imaginary`.
+Instead, *imaginary literals* denote complex numbers *without* a real part.
 
 For example, in math, the complex number 3+4.2\ *i* is written
 as the real number 3 added to the imaginary number 4.2\ *i*.
