@@ -29,6 +29,8 @@ typedef struct {
     Py_complex cval;
 } PyComplexObject;
 
+#define PyImaginaryObject PyComplexObject
+
 PyAPI_FUNC(PyObject *) PyComplex_FromCComplex(Py_complex);
 
 PyAPI_FUNC(Py_complex) PyComplex_AsCComplex(PyObject *op);

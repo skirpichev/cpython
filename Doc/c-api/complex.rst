@@ -120,6 +120,42 @@ Complex Number Objects
       Use :meth:`~object.__index__` if available.
 
 
+Imaginary Number Objects
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. index:: pair: object; imaginary number
+
+
+.. c:type:: PyImaginaryObject
+
+   This subtype of :c:type:`PyComplexObject` represents a Python imaginary
+   number object.
+
+
+.. c:var:: PyTypeObject PyImaginary_Type
+
+   This instance of :c:type:`PyTypeObject` represents purely imaginary numbers,
+   the Python complex number type *without* real component.
+
+
+.. c:function:: int PyImaginary_Check(PyObject *p)
+
+   Return true if its argument is a :c:type:`PyImaginaryObject` or a subtype of
+   :c:type:`PyImaginaryObject`.  This function always succeeds.
+
+
+.. c:function:: int PyImaginary_CheckExact(PyObject *p)
+
+   Return true if its argument is a :c:type:`PyImaginaryObject`, but not a
+   subtype of :c:type:`PyImaginaryObject`.  This function always succeeds.
+
+
+.. c:function:: PyObject* PyImaginary_FromDouble(double imag)
+
+   Return a new :c:type:`PyImaginaryObject` object with *imag* imaginary
+   component.  Return ``NULL`` with an exception set on error.
+
+
 Complex Numbers as C Structures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
