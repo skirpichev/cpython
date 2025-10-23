@@ -445,7 +445,7 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
                     except OverflowError:
                         complex_pow = "overflow"
                     self.assertEqual(str(float_pow), str(int_pow))
-                    self.assertAlmostEqual(complex_pow, int_pow)
+                    self.assertEqual(str(complex_pow), str(int_pow))
 
     def test_boolcontext(self):
         for i in range(100):

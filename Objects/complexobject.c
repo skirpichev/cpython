@@ -573,6 +573,12 @@ _Py_cr_pow(Py_complex a, double b)
         r = c_powi(a, (long)b);
     }
     else {
+        if (a.real == 0. && a.imag == 0. && b < 0) {
+            r.real = 0.;
+            r.imag = 0.;
+            errno = EDOM;
+            return r;
+        }
         r = _Py_c_log(a);
         r.real *= b;
         r.imag *= b;
@@ -969,8 +975,12 @@ complex_pow(PyObject *v, PyObject *w, PyObject *z)
     TO_COMPLEX(v, a);
     if (PyComplex_Check(w)) {
         Py_complex b = ((PyComplexObject *)w)->cval;
-
-        a = _Py_c_pow(a, b);
+        if (!b.imag) {
+            a = _Py_cr_pow(a, b.real);
+        }
+        else {
+            a = _Py_c_pow(a, b);
+        }
     }
     else {
         double b;
