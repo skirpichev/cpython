@@ -12,6 +12,9 @@
 #include "pycore_long.h"          // _PyLong_GetZero()
 #include "pycore_object.h"        // _PyObject_Init()
 #include "pycore_pymath.h"        // _Py_ADJUST_ERANGE2()
+#include <float.h>
+/* For _Py_log1p with workarounds for buggy handling of zeros. */
+#include "Modules/_math.h"
 
 
 #define _PyComplexObject_CAST(op)   ((PyComplexObject *)(op))
@@ -333,7 +336,11 @@ _Py_c_pow(Py_complex a, Py_complex b)
         r.real = len*cos(phase);
         r.imag = len*sin(phase);
 
-        _Py_ADJUST_ERANGE2(r.real, r.imag);
+        if (isfinite(a.real) && isfinite(a.imag)
+            && isfinite(b.real) && isfinite(b.imag))
+        {
+            _Py_ADJUST_ERANGE2(r.real, r.imag);
+        }
     }
     return r;
 }
@@ -361,6 +368,197 @@ c_powi(Py_complex x, long n)
         return c_powu(x,n);
     else
         return _Py_c_quot(c_1, c_powu(x,-n));
+}
+
+#define P Py_MATH_PI
+#define P14 0.25*Py_MATH_PI
+#define P12 0.5*Py_MATH_PI
+#define P34 0.75*Py_MATH_PI
+#define INF Py_INFINITY
+#define N Py_NAN
+#define U -9.5426319407711027e33 /* unlikely value, used as placeholder */
+#define CM_LARGE_DOUBLE (DBL_MAX/4.)
+#define CM_LOG_LARGE_DOUBLE (log(CM_LARGE_DOUBLE))
+
+enum special_types {
+    ST_NINF,            /* 0, negative infinity */
+    ST_NEG,             /* 1, negative finite number (nonzero) */
+    ST_NZERO,           /* 2, -0. */
+    ST_PZERO,           /* 3, +0. */
+    ST_POS,             /* 4, positive finite number (nonzero) */
+    ST_PINF,            /* 5, positive infinity */
+    ST_NAN              /* 6, Not a Number */
+};
+
+static enum special_types
+special_type(double d)
+{
+    if (isfinite(d)) {
+        if (d != 0) {
+            if (copysign(1., d) == 1.)
+                return ST_POS;
+            else
+                return ST_NEG;
+        }
+        else {
+            if (copysign(1., d) == 1.)
+                return ST_PZERO;
+            else
+                return ST_NZERO;
+        }
+    }
+    if (isnan(d))
+        return ST_NAN;
+    if (copysign(1., d) == 1.)
+        return ST_PINF;
+    else
+        return ST_NINF;
+}
+
+#define SPECIAL_VALUE(z, table)                       \
+    if (!isfinite((z).real) || !isfinite((z).imag)) { \
+        errno = 0;                                    \
+        return table[special_type((z).real)]          \
+                    [special_type((z).imag)];         \
+    }
+
+static Py_complex exp_special_values[7][7] = {
+    {{0.,0.},  {U,U},  {0.,-0.},   {0.,0.},   {U,U},  {0.,0.},  {0.,0.}},
+    {{N,N},    {U,U},  {U,U},      {U,U},     {U,U},  {N,N},    {N,N}},
+    {{N,N},    {U,U},  {1.,-0.},   {1.,0.},   {U,U},  {N,N},    {N,N}},
+    {{N,N},    {U,U},  {1.,-0.},   {1.,0.},   {U,U},  {N,N},    {N,N}},
+    {{N,N},    {U,U},  {U,U},      {U,U},     {U,U},  {N,N},    {N,N}},
+    {{INF,N},  {U,U},  {INF,-0.},  {INF,0.},  {U,U},  {INF,N},  {INF,N}},
+    {{N,N},    {N,N},  {N,-0.},    {N,0.},    {N,N},  {N,N},    {N,N}}
+};
+
+Py_complex
+_Py_c_exp(Py_complex z)
+{
+    Py_complex r;
+    double l;
+
+    if (!isfinite(z.real) || !isfinite(z.imag)) {
+        if (isinf(z.real) && isfinite(z.imag)
+            && (z.imag != 0.)) {
+            if (z.real > 0) {
+                r.real = copysign(INF, cos(z.imag));
+                r.imag = copysign(INF, sin(z.imag));
+            }
+            else {
+                r.real = copysign(0., cos(z.imag));
+                r.imag = copysign(0., sin(z.imag));
+            }
+        }
+        else {
+            r = exp_special_values[special_type(z.real)]
+                                  [special_type(z.imag)];
+        }
+        /* need to set errno = EDOM if y is +/- infinity and x is not
+           a NaN and not -infinity */
+        if (isinf(z.imag) &&
+            (isfinite(z.real) ||
+             (isinf(z.real) && z.real > 0)))
+            errno = EDOM;
+        else
+            errno = 0;
+        return r;
+    }
+
+    if (z.real > CM_LOG_LARGE_DOUBLE) {
+        l = exp(z.real-1.);
+        r.real = l*cos(z.imag)*Py_MATH_E;
+        r.imag = l*sin(z.imag)*Py_MATH_E;
+    } else {
+        l = exp(z.real);
+        r.real = l*cos(z.imag);
+        r.imag = l*sin(z.imag);
+    }
+    /* detect overflow, and set errno accordingly */
+    if (isinf(r.real) || isinf(r.imag))
+        errno = ERANGE;
+    else
+        errno = 0;
+    return r;
+}
+
+static Py_complex log_special_values[7][7] = {
+    { {INF,-P34},  {INF,-P},   {INF,-P},    {INF,P},    {INF,P},   {INF,P34},   {INF,N}},
+    { {INF,-P12},  {U,U},      {U,U},       {U,U},      {U,U},     {INF,P12},   {N,N}},
+    { {INF,-P12},  {U,U},      {-INF,-P},   {-INF,P},   {U,U},     {INF,P12},   {N,N}},
+    { {INF,-P12},  {U,U},      {-INF,-0.},  {-INF,0.},  {U,U},     {INF,P12},   {N,N}},
+    { {INF,-P12},  {U,U},      {U,U},       {U,U},      {U,U},     {INF,P12},   {N,N}},
+    { {INF,-P14},  {INF,-0.},  {INF,-0.},   {INF,0.},   {INF,0.},  {INF,P14},   {INF,N}},
+    { {INF,N},     {N,N},      {N,N},       {N,N},      {N,N},     {INF,N},     {N,N}}
+};
+
+Py_complex
+_Py_c_log(Py_complex z)
+{
+    /*
+       The usual formula for the real part is log(hypot(z.real, z.imag)).
+       There are four situations where this formula is potentially
+       problematic:
+
+       (1) the absolute value of z is subnormal.  Then hypot is subnormal,
+       so has fewer than the usual number of bits of accuracy, hence may
+       have large relative error.  This then gives a large absolute error
+       in the log.  This can be solved by rescaling z by a suitable power
+       of 2.
+
+       (2) the absolute value of z is greater than DBL_MAX (e.g. when both
+       z.real and z.imag are within a factor of 1/sqrt(2) of DBL_MAX)
+       Again, rescaling solves this.
+
+       (3) the absolute value of z is close to 1.  In this case it's
+       difficult to achieve good accuracy, at least in part because a
+       change of 1ulp in the real or imaginary part of z can result in a
+       change of billions of ulps in the correctly rounded answer.
+
+       (4) z = 0.  The simplest thing to do here is to call the
+       floating-point log with an argument of 0, and let its behaviour
+       (returning -infinity, signaling a floating-point exception, setting
+       errno, or whatever) determine that of c_log.  So the usual formula
+       is fine here.
+
+     */
+
+    Py_complex r;
+    double ax, ay, am, an, h;
+
+    SPECIAL_VALUE(z, log_special_values);
+
+    ax = fabs(z.real);
+    ay = fabs(z.imag);
+
+    if (ax > CM_LARGE_DOUBLE || ay > CM_LARGE_DOUBLE) {
+        r.real = log(hypot(ax/2., ay/2.)) + M_LN2;
+    } else if (ax < DBL_MIN && ay < DBL_MIN) {
+        if (ax > 0. || ay > 0.) {
+            /* catch cases where hypot(ax, ay) is subnormal */
+            r.real = log(hypot(ldexp(ax, DBL_MANT_DIG),
+                     ldexp(ay, DBL_MANT_DIG))) - DBL_MANT_DIG*M_LN2;
+        }
+        else {
+            /* log(+/-0. +/- 0i) */
+            r.real = -INF;
+            r.imag = atan2(z.imag, z.real);
+            errno = EDOM;
+            return r;
+        }
+    } else {
+        h = hypot(ax, ay);
+        if (0.71 <= h && h <= 1.73) {
+            am = ax > ay ? ax : ay;  /* max(ax, ay) */
+            an = ax > ay ? ay : ax;  /* min(ax, ay) */
+            r.real = m_log1p((am-1)*(am+1)+an*an)/2.;
+        } else {
+            r.real = log(h);
+        }
+    }
+    r.imag = atan2(z.imag, z.real);
+    errno = 0;
+    return r;
 }
 
 Py_complex

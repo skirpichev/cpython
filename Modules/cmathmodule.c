@@ -450,61 +450,6 @@ cmath_cosh_impl(PyObject *module, Py_complex z)
     return r;
 }
 
-
-/* exp(infinity + i*y) and exp(-infinity + i*y) need special treatment for
-   finite y */
-static Py_complex exp_special_values[7][7];
-
-Py_complex
-_Py_c_exp(Py_complex z)
-{
-    Py_complex r;
-    double l;
-
-    if (!isfinite(z.real) || !isfinite(z.imag)) {
-        if (isinf(z.real) && isfinite(z.imag)
-            && (z.imag != 0.)) {
-            if (z.real > 0) {
-                r.real = copysign(INF, cos(z.imag));
-                r.imag = copysign(INF, sin(z.imag));
-            }
-            else {
-                r.real = copysign(0., cos(z.imag));
-                r.imag = copysign(0., sin(z.imag));
-            }
-        }
-        else {
-            r = exp_special_values[special_type(z.real)]
-                                  [special_type(z.imag)];
-        }
-        /* need to set errno = EDOM if y is +/- infinity and x is not
-           a NaN and not -infinity */
-        if (isinf(z.imag) &&
-            (isfinite(z.real) ||
-             (isinf(z.real) && z.real > 0)))
-            errno = EDOM;
-        else
-            errno = 0;
-        return r;
-    }
-
-    if (z.real > CM_LOG_LARGE_DOUBLE) {
-        l = exp(z.real-1.);
-        r.real = l*cos(z.imag)*Py_MATH_E;
-        r.imag = l*sin(z.imag)*Py_MATH_E;
-    } else {
-        l = exp(z.real);
-        r.real = l*cos(z.imag);
-        r.imag = l*sin(z.imag);
-    }
-    /* detect overflow, and set errno accordingly */
-    if (isinf(r.real) || isinf(r.imag))
-        errno = ERANGE;
-    else
-        errno = 0;
-    return r;
-}
-
 /*[clinic input]
 cmath.exp = cmath.acos
 
@@ -516,77 +461,6 @@ cmath_exp_impl(PyObject *module, Py_complex z)
 /*[clinic end generated code: output=edcec61fb9dfda6c input=8b9e6cf8a92174c3]*/
 {
     return _Py_c_exp(z);
-}
-
-static Py_complex log_special_values[7][7];
-
-Py_complex
-_Py_c_log(Py_complex z)
-{
-    /*
-       The usual formula for the real part is log(hypot(z.real, z.imag)).
-       There are four situations where this formula is potentially
-       problematic:
-
-       (1) the absolute value of z is subnormal.  Then hypot is subnormal,
-       so has fewer than the usual number of bits of accuracy, hence may
-       have large relative error.  This then gives a large absolute error
-       in the log.  This can be solved by rescaling z by a suitable power
-       of 2.
-
-       (2) the absolute value of z is greater than DBL_MAX (e.g. when both
-       z.real and z.imag are within a factor of 1/sqrt(2) of DBL_MAX)
-       Again, rescaling solves this.
-
-       (3) the absolute value of z is close to 1.  In this case it's
-       difficult to achieve good accuracy, at least in part because a
-       change of 1ulp in the real or imaginary part of z can result in a
-       change of billions of ulps in the correctly rounded answer.
-
-       (4) z = 0.  The simplest thing to do here is to call the
-       floating-point log with an argument of 0, and let its behaviour
-       (returning -infinity, signaling a floating-point exception, setting
-       errno, or whatever) determine that of c_log.  So the usual formula
-       is fine here.
-
-     */
-
-    Py_complex r;
-    double ax, ay, am, an, h;
-
-    SPECIAL_VALUE(z, log_special_values);
-
-    ax = fabs(z.real);
-    ay = fabs(z.imag);
-
-    if (ax > CM_LARGE_DOUBLE || ay > CM_LARGE_DOUBLE) {
-        r.real = log(hypot(ax/2., ay/2.)) + M_LN2;
-    } else if (ax < DBL_MIN && ay < DBL_MIN) {
-        if (ax > 0. || ay > 0.) {
-            /* catch cases where hypot(ax, ay) is subnormal */
-            r.real = log(hypot(ldexp(ax, DBL_MANT_DIG),
-                     ldexp(ay, DBL_MANT_DIG))) - DBL_MANT_DIG*M_LN2;
-        }
-        else {
-            /* log(+/-0. +/- 0i) */
-            r.real = -INF;
-            r.imag = atan2(z.imag, z.real);
-            errno = EDOM;
-            return r;
-        }
-    } else {
-        h = hypot(ax, ay);
-        if (0.71 <= h && h <= 1.73) {
-            am = ax > ay ? ax : ay;  /* max(ax, ay) */
-            an = ax > ay ? ay : ax;  /* min(ax, ay) */
-            r.real = m_log1p((am-1)*(am+1)+an*an)/2.;
-        } else {
-            r.real = log(h);
-        }
-    }
-    r.imag = atan2(z.imag, z.real);
-    errno = 0;
-    return r;
 }
 
 
@@ -1261,26 +1135,6 @@ cmath_exec(PyObject *mod)
       C(N,N)   C(U,U) C(U,U)     C(U,U)     C(U,U) C(N,N)   C(N,N)
       C(INF,N) C(U,U) C(INF,-0.) C(INF,0.)  C(U,U) C(INF,N) C(INF,N)
       C(N,N)   C(N,N) C(N,0.)    C(N,0.)    C(N,N) C(N,N)   C(N,N)
-    })
-
-    INIT_SPECIAL_VALUES(exp_special_values, {
-      C(0.,0.) C(U,U) C(0.,-0.)  C(0.,0.)  C(U,U) C(0.,0.) C(0.,0.)
-      C(N,N)   C(U,U) C(U,U)     C(U,U)    C(U,U) C(N,N)   C(N,N)
-      C(N,N)   C(U,U) C(1.,-0.)  C(1.,0.)  C(U,U) C(N,N)   C(N,N)
-      C(N,N)   C(U,U) C(1.,-0.)  C(1.,0.)  C(U,U) C(N,N)   C(N,N)
-      C(N,N)   C(U,U) C(U,U)     C(U,U)    C(U,U) C(N,N)   C(N,N)
-      C(INF,N) C(U,U) C(INF,-0.) C(INF,0.) C(U,U) C(INF,N) C(INF,N)
-      C(N,N)   C(N,N) C(N,-0.)   C(N,0.)   C(N,N) C(N,N)   C(N,N)
-    })
-
-    INIT_SPECIAL_VALUES(log_special_values, {
-      C(INF,-P34) C(INF,-P)  C(INF,-P)   C(INF,P)   C(INF,P)  C(INF,P34)  C(INF,N)
-      C(INF,-P12) C(U,U)     C(U,U)      C(U,U)     C(U,U)    C(INF,P12)  C(N,N)
-      C(INF,-P12) C(U,U)     C(-INF,-P)  C(-INF,P)  C(U,U)    C(INF,P12)  C(N,N)
-      C(INF,-P12) C(U,U)     C(-INF,-0.) C(-INF,0.) C(U,U)    C(INF,P12)  C(N,N)
-      C(INF,-P12) C(U,U)     C(U,U)      C(U,U)     C(U,U)    C(INF,P12)  C(N,N)
-      C(INF,-P14) C(INF,-0.) C(INF,-0.)  C(INF,0.)  C(INF,0.) C(INF,P14)  C(INF,N)
-      C(INF,N)    C(N,N)     C(N,N)      C(N,N)     C(N,N)    C(INF,N)    C(N,N)
     })
 
     INIT_SPECIAL_VALUES(sinh_special_values, {
