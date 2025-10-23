@@ -29,8 +29,6 @@ class complex "PyComplexObject *" "&PyComplex_Type"
 
 /* elementary operations on complex numbers */
 
-static Py_complex c_1 = {1., 0.};
-
 Py_complex
 _Py_c_sum(Py_complex a, Py_complex b)
 {
@@ -345,14 +343,17 @@ _Py_c_pow(Py_complex a, Py_complex b)
     return r;
 }
 
+#define INT_EXP_CUTOFF 100
+
 static Py_complex
 c_powu(Py_complex x, long n)
 {
-    Py_complex r, p;
+    Py_complex p = x, r = n-- ? p : (Py_complex) {1., 0.};
     long mask = 1;
-    r = c_1;
-    p = x;
-    while (mask > 0 && n >= mask) {
+    assert(-1 <= n);
+    assert(n < INT_EXP_CUTOFF);
+    while (n >= mask) {
+        assert(mask>0);
         if (n & mask)
             r = _Py_c_prod(r,p);
         mask <<= 1;
@@ -364,10 +365,10 @@ c_powu(Py_complex x, long n)
 static Py_complex
 c_powi(Py_complex x, long n)
 {
-    if (n > 0)
-        return c_powu(x,n);
+    if (n < 0)
+        return _Py_rc_quot(1.0, c_powu(x, -n));
     else
-        return _Py_c_quot(c_1, c_powu(x,-n));
+        return c_powu(x,n);
 }
 
 #define P Py_MATH_PI
