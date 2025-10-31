@@ -62,6 +62,8 @@ module marshal
 #define TYPE_ELLIPSIS           '.'
 #define TYPE_BINARY_FLOAT       'g'  // Version 0 uses TYPE_FLOAT instead.
 #define TYPE_BINARY_COMPLEX     'y'  // Version 0 uses TYPE_COMPLEX instead.
+#define TYPE_IMAGINARY          'j'
+#define TYPE_BINARY_IMAGINARY   'J'
 #define TYPE_LONG               'l'  // See also TYPE_INT.
 #define TYPE_STRING             's'  // Bytes. (Name comes from Python 2.)
 #define TYPE_TUPLE              '('  // See also TYPE_SMALL_TUPLE.
@@ -506,6 +508,16 @@ w_complex_object(PyObject *v, char flag, WFILE *p)
         else {
             W_TYPE(TYPE_COMPLEX, p);
             w_float_str(PyComplex_RealAsDouble(v), p);
+            w_float_str(PyComplex_ImagAsDouble(v), p);
+        }
+    }
+    else if (PyImaginary_CheckExact(v)) {
+        if (p->version > 1) {
+            W_TYPE(TYPE_BINARY_IMAGINARY, p);
+            w_float_bin(PyComplex_ImagAsDouble(v), p);
+        }
+        else {
+            W_TYPE(TYPE_IMAGINARY, p);
             w_float_str(PyComplex_ImagAsDouble(v), p);
         }
     }
@@ -1245,6 +1257,26 @@ r_object(RFILE *p)
             if (c.imag == -1.0 && PyErr_Occurred())
                 break;
             retval = PyComplex_FromCComplex(c);
+            R_REF(retval);
+            break;
+        }
+
+    case TYPE_IMAGINARY:
+        {
+            double i = r_float_str(p);
+            if (i == -1.0 && PyErr_Occurred())
+                break;
+            retval = PyImaginary_FromDouble(i);
+            R_REF(retval);
+            break;
+        }
+
+    case TYPE_BINARY_IMAGINARY:
+        {
+            double i = r_float_bin(p);
+            if (i == -1.0 && PyErr_Occurred())
+                break;
+            retval = PyImaginary_FromDouble(i);
             R_REF(retval);
             break;
         }

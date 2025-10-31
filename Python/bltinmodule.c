@@ -2935,6 +2935,11 @@ builtin_sum_impl(PyObject *module, PyObject *iterable, PyObject *start)
                 return PyComplex_FromDoubles(cs_to_double(re_sum),
                                              cs_to_double(im_sum));
             }
+            if (PyImaginary_CheckExact(item)) {
+                double value = PyComplex_ImagAsDouble(item);
+                im_sum = cs_add(im_sum, value);
+                continue;
+            }
             if (PyComplex_CheckExact(item)) {
                 z = PyComplex_AsCComplex(item);
                 re_sum = cs_add(re_sum, z.real);

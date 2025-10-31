@@ -307,6 +307,8 @@ func,PyGILState_Release,3.2,,
 type,PyGILState_STATE,3.2,,
 type,PyGetSetDef,3.2,,full-abi
 data,PyGetSetDescr_Type,3.2,,
+func,PyImaginary_FromDouble,3.14,,
+data,PyImaginary_Type,3.14,,
 func,PyImport_AddModule,3.2,,
 func,PyImport_AddModuleObject,3.7,,
 func,PyImport_AddModuleRef,3.13,,

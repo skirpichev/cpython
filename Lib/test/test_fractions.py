@@ -1673,7 +1673,7 @@ class FractionTest(unittest.TestCase):
         # See issue gh-102840 for more details.
 
         a = F(1, 2)
-        b = 1j
+        b = 0.0+1j
         message = "unsupported operand type(s) for %s: '%s' and '%s'"
         # test forward
         self.assertRaisesMessage(TypeError,

@@ -2519,6 +2519,11 @@
 [function.PyEval_GetFrameLocals]
     added = '3.13'
 
+[function.PyImaginary_FromDouble]
+    added = '3.14'
+[data.PyImaginary_Type]
+    added = '3.14'
+
 [function.Py_TYPE]
     added = '3.14'
 [function.Py_REFCNT]

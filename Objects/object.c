@@ -2559,6 +2559,7 @@ static PyTypeObject* static_types[] = {
     // subclasses: _PyTypes_FiniTypes() deallocates them before their base
     // class
     &PyBool_Type,         // base=&PyLong_Type
+    &PyImaginary_Type,    // base=&PyComplex_Type
     &PyCMethod_Type,      // base=&PyCFunction_Type
     &PyODictItems_Type,   // base=&PyDictItems_Type
     &PyODictKeys_Type,    // base=&PyDictKeys_Type
