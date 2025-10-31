@@ -28,7 +28,16 @@ def constructor(object):
 def pickle_complex(c):
     return complex, (c.real, c.imag)
 
+_imaginary = type(1j)
+class _imaginary_constructor:
+    def __new__(cls, imag):
+        return _imaginary(imag)
+
+def pickle_imaginary(c):
+    return _imaginary_constructor, (c.imag,)
+
 pickle(complex, pickle_complex, complex)
+pickle(_imaginary, pickle_imaginary)
 
 def pickle_union(obj):
     import typing, operator
