@@ -1535,6 +1535,9 @@ imaginary_new_impl(PyTypeObject *type, PyObject *x)
     if (x == NULL) {
         x = _PyLong_GetZero();
     }
+    if (PyImaginary_CheckExact(x) && type == &PyImaginary_Type) {
+        return Py_NewRef(x);
+    }
 
     PyNumberMethods *nbx = Py_TYPE(x)->tp_as_number;
 
