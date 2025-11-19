@@ -6036,7 +6036,7 @@ static PyObject *
 update_cache(struct type_cache_entry *entry, PyObject *name, unsigned int version_tag, PyObject *value)
 {
     _Py_atomic_store_ptr_relaxed(&entry->value, value); /* borrowed */
-    assert(_PyASCIIObject_CAST(name)->hash != -1);
+    assert(PyUnstable_Unicode_GET_CACHED_HASH(name) != -1);
     OBJECT_STAT_INC_COND(type_cache_collisions, entry->name != Py_None && entry->name != name);
     // We're releasing this under the lock for simplicity sake because it's always a
     // exact unicode object or Py_None so it's safe to do so.
@@ -6545,6 +6545,18 @@ type_setattro(PyObject *self, PyObject *name, PyObject *value)
     PyTypeObject *metatype = Py_TYPE(type);
     assert(!_PyType_HasFeature(metatype, Py_TPFLAGS_INLINE_VALUES));
     assert(!_PyType_HasFeature(metatype, Py_TPFLAGS_MANAGED_DICT));
+
+#ifdef Py_GIL_DISABLED
+    // gh-139103: Enable deferred refcounting for functions assigned
+    // to type objects.  This is important for `dataclass.__init__`,
+    // which is generated dynamically.
+    if (value != NULL &&
+        PyFunction_Check(value) &&
+        !_PyObject_HasDeferredRefcount(value))
+    {
+        PyUnstable_Object_EnableDeferredRefcount(value);
+    }
+#endif
 
     PyObject *old_value = NULL;
     PyObject *descr = _PyType_LookupRef(metatype, name);
