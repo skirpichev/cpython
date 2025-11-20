@@ -39,8 +39,6 @@ class WithFloat:
 class ComplexSubclass(complex):
     pass
 
-imaginary = type(1j)
-
 class ImaginarySubclass(imaginary):
     pass
 

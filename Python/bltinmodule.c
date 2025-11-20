@@ -3486,6 +3486,7 @@ _PyBuiltin_Init(PyInterpreterState *interp)
     SETBUILTIN("float",                 &PyFloat_Type);
     SETBUILTIN("frozenset",             &PyFrozenSet_Type);
     SETBUILTIN("property",              &PyProperty_Type);
+    SETBUILTIN("imaginary",             &PyImaginary_Type);
     SETBUILTIN("int",                   &PyLong_Type);
     SETBUILTIN("list",                  &PyList_Type);
     SETBUILTIN("map",                   &PyMap_Type);

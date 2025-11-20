@@ -24,8 +24,6 @@ class BadComplex3:
     def __complex__(self):
         raise RuntimeError
 
-imaginary = type(1j)
-
 class ImaginarySubclass(imaginary):
     pass
 

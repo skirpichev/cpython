@@ -318,7 +318,7 @@ class BugsTestCase(unittest.TestCase):
         #   >>> type(loads(dumps(Int())))
         #   <type 'int'>
         for typ in (int, float, complex, tuple, list, dict, set, frozenset,
-                    type(1j)):
+                    imaginary):
             # Note: str subclasses are not tested because they get handled
             # by marshal's routines for objects supporting the buffer API.
             subtyp = type('subtyp', (typ,), {})

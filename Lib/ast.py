@@ -90,7 +90,7 @@ def _convert_literal(node):
         isinstance(node, UnaryOp)
         and isinstance(node.op, (UAdd, USub))
         and isinstance(node.operand, Constant)
-        and type(operand := node.operand.value) in (int, float, type(1j))
+        and type(operand := node.operand.value) in (int, float, imaginary)
     ):
         if isinstance(node.op, UAdd):
             return + operand
@@ -102,7 +102,7 @@ def _convert_literal(node):
         and isinstance(node.left, (Constant, UnaryOp))
         and isinstance(node.right, Constant)
         and type(left := _convert_literal(node.left)) in (int, float)
-        and type(right := _convert_literal(node.right)) is type(1j)
+        and type(right := _convert_literal(node.right)) is imaginary
     ):
         if isinstance(node.op, Add):
             return left + right
