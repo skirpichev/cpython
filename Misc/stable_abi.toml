@@ -2644,3 +2644,5 @@
     added = '3.15'
 [const.Py_mod_token]
     added = '3.15'
+[function.PyDict_SetDefaultRef]
+    added = '3.15'
