@@ -980,8 +980,9 @@ are always available.  They are listed here in alphabetical order.
 
 .. class:: imaginary(x=0.0)
 
-   Return an imaginary number with the value ``float(x)*1j``.  If argument is
-   omitted, returns ``0j``.
+   Create an imaginary number from a number or a string.
+
+   This is equivalent of ``float(x)*1j``.
 
    .. versionadded:: next
 

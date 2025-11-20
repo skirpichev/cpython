@@ -1523,20 +1523,17 @@ PyTypeObject PyComplex_Type = {
 imaginary.__new__ as imaginary_new
     x: object(c_default="NULL") = 0
 
-Create an imaginary number from a real number or string.
+Create an imaginary number from a number or a string.
 
 This is equivalent of float(x)*1j.
 [clinic start generated code]*/
 
 static PyObject *
 imaginary_new_impl(PyTypeObject *type, PyObject *x)
-/*[clinic end generated code: output=07242ea06eb219f6 input=0ec29c2535687795]*/
+/*[clinic end generated code: output=07242ea06eb219f6 input=b20209245b6b7da8]*/
 {
     if (x == NULL) {
         x = _PyLong_GetZero();
-    }
-    if (PyImaginary_CheckExact(x) && type == &PyImaginary_Type) {
-        return Py_NewRef(x);
     }
 
     PyNumberMethods *nbx = Py_TYPE(x)->tp_as_number;
