@@ -2098,7 +2098,7 @@ _return_values = {
     '__contains__': False,
     '__len__': 0,
     '__exit__': False,
-    '__complex__': 1j,
+    '__complex__': 1+1j,
     '__float__': 1.0,
     '__bool__': True,
     '__index__': 1,

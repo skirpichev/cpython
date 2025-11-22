@@ -736,12 +736,12 @@ class CommandLineTest(unittest.TestCase):
     def test_invocation(self):
         # test 'python -m pickle pickle_file'
         data = {
-            'a': [1, 2.0, 3+4j],
+            'a': [1, 2.0, 3+4j, -123j],
             'b': ('character string', b'byte string'),
             'c': 'string'
         }
         expect = '''
-            {'a': [1, 2.0, (3+4j)],
+            {'a': [1, 2.0, (3+4j), -123j],
              'b': ('character string', b'byte string'),
              'c': 'string'}
         '''
