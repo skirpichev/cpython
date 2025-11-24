@@ -514,18 +514,6 @@ PyLong_FromDouble(double dval)
     return (PyObject *)v;
 }
 
-/* Checking for overflow in PyLong_AsLong is a PITA since C doesn't define
- * anything about what happens when a signed integer operation overflows,
- * and some compilers think they're doing you a favor by being "clever"
- * then.  The bit pattern for the largest positive signed long is
- * (unsigned long)LONG_MAX, and for the smallest negative signed long
- * it is abs(LONG_MIN), which we could write -(unsigned long)LONG_MIN.
- * However, some other compilers warn about applying unary minus to an
- * unsigned operand.  Hence the weird "0-".
- */
-#define PY_ABS_LONG_MIN         (0-(unsigned long)LONG_MIN)
-#define PY_ABS_SSIZE_T_MIN      (0-(size_t)PY_SSIZE_T_MIN)
-
 static inline unsigned long
 unroll_digits_ulong(PyLongObject *v, Py_ssize_t *iptr)
 {
@@ -574,6 +562,39 @@ unroll_digits_size_t(PyLongObject *v, Py_ssize_t *iptr)
     return x;
 }
 
+/* Checking for overflow in PyLong_AsLong is a PITA since C doesn't define
+ * anything about what happens when a signed integer operation overflows,
+ * and some compilers think they're doing you a favor by being "clever"
+ * then.  The bit pattern for the largest positive signed long is
+ * (unsigned long)LONG_MAX, and for the smallest negative signed long
+ * it is abs(LONG_MIN), which we could write -(unsigned long)LONG_MIN.
+ * However, some other compilers warn about applying unary minus to an
+ * unsigned operand.  Hence the weird "0-".
+ */
+
+#define UNROLL_DIGITS(v, suff, type, utype, UMAX, TYPE)            \
+        i = _PyLong_DigitCount(v);                                 \
+        sign = _PyLong_NonCompactSign(v);                          \
+                                                                   \
+        utype x = unroll_digits_##suff(v, &i);                     \
+        while (--i >= 0) {                                         \
+            if (x > (UMAX >> PyLong_SHIFT)) {                      \
+                goto fail;                                         \
+            }                                                      \
+            x = (x << PyLong_SHIFT) | v->long_value.ob_digit[i];   \
+        }                                                          \
+        /* Haven't lost any bits, but casting to utype requires */ \
+        /* extra care (see comment above).                      */ \
+        if (x <= (utype)TYPE##_MAX) {                              \
+            res = (type)x * sign;                                  \
+        }                                                          \
+        else if (sign < 0 && x == (0-(utype)TYPE##_MIN)) {         \
+            res = TYPE##_MIN;                                      \
+        }                                                          \
+        else {                                                     \
+            goto fail;                                             \
+        }
+
 /* Get a C long int from an int object or any object that has an __index__
    method.
 
@@ -588,7 +609,7 @@ PyLong_AsLongAndOverflow(PyObject *vv, int *overflow)
 {
     /* This version originally by Tim Peters */
     PyLongObject *v;
-    long res;
+    long res = -1;
     Py_ssize_t i;
     int sign;
     int do_decref = 0; /* if PyNumber_Index was called */
@@ -613,11 +634,9 @@ PyLong_AsLongAndOverflow(PyObject *vv, int *overflow)
         Py_ssize_t tmp = _PyLong_CompactValue(v);
         if (tmp < LONG_MIN) {
             *overflow = -1;
-            res = -1;
         }
         else if (tmp > LONG_MAX) {
             *overflow = 1;
-            res = -1;
         }
         else {
             res = (long)tmp;
@@ -627,31 +646,10 @@ PyLong_AsLongAndOverflow(PyObject *vv, int *overflow)
 #endif
     }
     else {
-        res = -1;
-        i = _PyLong_DigitCount(v);
-        sign = _PyLong_NonCompactSign(v);
-
-        unsigned long x = unroll_digits_ulong(v, &i);
-        while (--i >= 0) {
-            if (x > (ULONG_MAX >> PyLong_SHIFT)) {
-                *overflow = sign;
-                goto exit;
-            }
-            x = (x << PyLong_SHIFT) | v->long_value.ob_digit[i];
-        }
-        /* Haven't lost any bits, but casting to long requires extra
-        * care (see comment above).
-        */
-        if (x <= (unsigned long)LONG_MAX) {
-            res = (long)x * sign;
-        }
-        else if (sign < 0 && x == PY_ABS_LONG_MIN) {
-            res = LONG_MIN;
-        }
-        else {
-            *overflow = sign;
-            /* res is already set to -1 */
-        }
+        UNROLL_DIGITS(v, ulong, long, unsigned long, ULONG_MAX, LONG);
+        goto exit;
+      fail:
+        *overflow = sign;
     }
   exit:
     if (do_decref) {
@@ -701,7 +699,7 @@ PyLong_AsInt(PyObject *obj)
 Py_ssize_t
 PyLong_AsSsize_t(PyObject *vv) {
     PyLongObject *v;
-    Py_ssize_t i;
+    Py_ssize_t i, res = -1;
     int sign;
 
     if (vv == NULL) {
@@ -717,32 +715,27 @@ PyLong_AsSsize_t(PyObject *vv) {
     if (_PyLong_IsCompact(v)) {
         return _PyLong_CompactValue(v);
     }
-    i = _PyLong_DigitCount(v);
-    sign = _PyLong_NonCompactSign(v);
-
-    size_t x = unroll_digits_size_t(v, &i);
-    while (--i >= 0) {
-        if (x > (SIZE_MAX >> PyLong_SHIFT)) {
-            goto overflow;
-        }
-        x = (x << PyLong_SHIFT) | v->long_value.ob_digit[i];
-    }
-    /* Haven't lost any bits, but casting to a signed type requires
-     * extra care (see comment above).
-     */
-    if (x <= (size_t)PY_SSIZE_T_MAX) {
-        return (Py_ssize_t)x * sign;
-    }
-    else if (sign < 0 && x == PY_ABS_SSIZE_T_MIN) {
-        return PY_SSIZE_T_MIN;
-    }
-    /* else overflow */
-
-  overflow:
+    UNROLL_DIGITS(v, size_t, Py_ssize_t, size_t, SIZE_MAX, PY_SSIZE_T);
+    return res;
+  fail:
     PyErr_SetString(PyExc_OverflowError,
                     "Python int too large to convert to C ssize_t");
-    return -1;
+    return res;
 }
+
+#define UNROLL_UDIGITS(v, suff, utype, UMAX)                     \
+    do {                                                         \
+        Py_ssize_t i = _PyLong_DigitCount(v);                    \
+        size_t x = unroll_digits_##suff(v, &i);                  \
+                                                                 \
+        while (--i >= 0) {                                       \
+            if (x > (UMAX >> PyLong_SHIFT)) {                    \
+                goto overflow;                                   \
+            }                                                    \
+            x = (x << PyLong_SHIFT) | v->long_value.ob_digit[i]; \
+        }                                                        \
+        return x;                                                \
+    } while (0);
 
 /* Get a C unsigned long int from an int object.
    Returns -1 and sets an error condition if overflow occurs. */
@@ -751,7 +744,6 @@ unsigned long
 PyLong_AsUnsignedLong(PyObject *vv)
 {
     PyLongObject *v;
-    Py_ssize_t i;
 
     if (vv == NULL) {
         PyErr_BadInternalCall();
@@ -780,16 +772,7 @@ PyLong_AsUnsignedLong(PyObject *vv)
                         "can't convert negative value to unsigned int");
         return (unsigned long) -1;
     }
-    i = _PyLong_DigitCount(v);
-
-    unsigned long x = unroll_digits_ulong(v, &i);
-    while (--i >= 0) {
-        if (x > (ULONG_MAX >> PyLong_SHIFT)) {
-            goto overflow;
-        }
-        x = (x << PyLong_SHIFT) | v->long_value.ob_digit[i];
-    }
-    return x;
+    UNROLL_UDIGITS(v, ulong, unsigned long, ULONG_MAX);
 overflow:
     PyErr_SetString(PyExc_OverflowError,
                     "Python int too large to convert "
@@ -804,7 +787,6 @@ size_t
 PyLong_AsSize_t(PyObject *vv)
 {
     PyLongObject *v;
-    Py_ssize_t i;
 
     if (vv == NULL) {
         PyErr_BadInternalCall();
@@ -824,18 +806,13 @@ PyLong_AsSize_t(PyObject *vv)
                    "can't convert negative value to size_t");
         return (size_t) -1;
     }
-    i = _PyLong_DigitCount(v);
+    UNROLL_UDIGITS(v, size_t, size_t, SIZE_MAX);
+overflow:
+    PyErr_SetString(PyExc_OverflowError,
+                    "Python int too large to convert "
+                    "to C size_t");
+    return (size_t) -1;
 
-    size_t x = unroll_digits_size_t(v, &i);
-    while (--i >= 0) {
-            if (x > (SIZE_MAX >> PyLong_SHIFT)) {
-                PyErr_SetString(PyExc_OverflowError,
-                    "Python int too large to convert to C size_t");
-                return (size_t) -1;
-            }
-            x = (x << PyLong_SHIFT) | v->long_value.ob_digit[i];
-        }
-    return x;
 }
 
 /* Get a C unsigned long int from an int object, ignoring the high bits.
@@ -1731,7 +1708,7 @@ PyLong_AsLongLongAndOverflow(PyObject *vv, int *overflow)
 {
     /* This version by Tim Peters */
     PyLongObject *v;
-    long long res;
+    long long res = -1;
     Py_ssize_t i;
     int sign;
     int do_decref = 0; /* if PyNumber_Index was called */
@@ -1756,11 +1733,9 @@ PyLong_AsLongLongAndOverflow(PyObject *vv, int *overflow)
         Py_ssize_t tmp = _PyLong_CompactValue(v);
         if (tmp < LLONG_MIN) {
             *overflow = -1;
-            res = -1;
         }
         else if (tmp > LLONG_MAX) {
             *overflow = 1;
-            res = -1;
         }
         else {
             res = (long long)tmp;
@@ -1770,30 +1745,11 @@ PyLong_AsLongLongAndOverflow(PyObject *vv, int *overflow)
 #endif
     }
     else {
-        i = _PyLong_DigitCount(v);
-        sign = _PyLong_NonCompactSign(v);
-        unsigned long long x = unroll_digits_ulong(v, &i);
-        while (--i >= 0) {
-            if (x > ULLONG_MAX >> PyLong_SHIFT) {
-                *overflow = sign;
-                res = -1;
-                goto exit;
-            }
-            x = (x << PyLong_SHIFT) + v->long_value.ob_digit[i];
-        }
-        /* Haven't lost any bits, but casting to long requires extra
-         * care (see comment above).
-         */
-        if (x <= (unsigned long long)LLONG_MAX) {
-            res = (long long)x * sign;
-        }
-        else if (sign < 0 && x == PY_ABS_LLONG_MIN) {
-            res = LLONG_MIN;
-        }
-        else {
-            *overflow = sign;
-            res = -1;
-        }
+        UNROLL_DIGITS(v, ulong, long long, unsigned long long,
+                      ULLONG_MAX, LLONG);
+        goto exit;
+      fail:
+        *overflow = sign;
     }
   exit:
     if (do_decref) {
