@@ -190,7 +190,7 @@ PyDoc_STRVAR(imaginary_new__doc__,
 "imaginary(x=0)\n"
 "--\n"
 "\n"
-"Create an imaginary number from a number or a string.\n"
+"Create an imaginary number from a number.\n"
 "\n"
 "This is equivalent of float(x)*1j.");
 
@@ -284,4 +284,4 @@ imaginary___getnewargs__(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
     return imaginary___getnewargs___impl((PyComplexObject *)self);
 }
-/*[clinic end generated code: output=c2de307dcaf92b58 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=736b28ea9b1178fa input=a9049054013a1b77]*/

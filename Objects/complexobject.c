@@ -1530,7 +1530,7 @@ This is equivalent of float(x)*1j.
 
 static PyObject *
 imaginary_new_impl(PyTypeObject *type, PyObject *x)
-/*[clinic end generated code: output=07242ea06eb219f6 input=b20209245b6b7da8]*/
+/*[clinic end generated code: output=07242ea06eb219f6 input=514e272ce7f4c8e7]*/
 {
     if (x == NULL) {
         x = _PyLong_GetZero();
