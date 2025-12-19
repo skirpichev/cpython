@@ -1523,7 +1523,7 @@ PyTypeObject PyComplex_Type = {
 imaginary.__new__ as imaginary_new
     x: object(c_default="NULL") = 0
 
-Create an imaginary number from a number or a string.
+Create an imaginary number from a number.
 
 This is equivalent of float(x)*1j.
 [clinic start generated code]*/
@@ -1539,7 +1539,7 @@ imaginary_new_impl(PyTypeObject *type, PyObject *x)
     PyNumberMethods *nbx = Py_TYPE(x)->tp_as_number;
 
     if (nbx == NULL || (nbx->nb_float == NULL && nbx->nb_index == NULL
-                        && !PyFloat_Check(x) && !PyUnicode_Check(x)))
+                        && !PyFloat_Check(x)))
     {
         PyErr_Format(PyExc_TypeError,
                      "imaginary() first argument must be a real number, "

@@ -712,7 +712,6 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         self.assertEqual(imaginary(), 0j)
         self.assertEqual(imaginary(-2), -2j)
         self.assertEqual(imaginary(1.25), 1.25j)
-        self.assertEqual(imaginary("1.25"), 1.25j)
 
         self.assertEqual(imaginary(WithFloat(42.)), 42j)
         self.assertRaises(TypeError, imaginary, WithFloat(None))
@@ -722,7 +721,7 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
 
         self.assertRaises(TypeError, imaginary, MyInt(42))
         self.assertRaises(TypeError, imaginary, 123, MyInt(42))
-        self.assertRaises(ValueError, imaginary, "1.25j")
+        self.assertRaises(TypeError, imaginary, "1.25")
 
         self.assertRaises(TypeError, imaginary, complex())
         self.assertRaises(TypeError, imaginary, object())

@@ -980,9 +980,9 @@ are always available.  They are listed here in alphabetical order.
 
 .. class:: imaginary(x=0.0)
 
-   Create an imaginary number from a number or a string.
+   Create an imaginary number from a number.
 
-   This is equivalent of ``float(x)*1j``.
+   This is equivalent of ``float(x)*1j`` for numeric input.
 
    .. versionadded:: next
 
