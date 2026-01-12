@@ -1758,65 +1758,9 @@ prepare_s(PyStructObject *self)
     return -1;
 }
 
-static int
-actual___init___impl(PyStructObject *self, PyObject *format)
-{
-    if (PyUnicode_Check(format)) {
-        format = PyUnicode_AsASCIIString(format);
-        if (format == NULL)
-            return -1;
-    }
-    else {
-        Py_INCREF(format);
-    }
-    if (!PyBytes_Check(format)) {
-        Py_DECREF(format);
-        PyErr_Format(PyExc_TypeError,
-                     "Struct() argument 1 must be a str or bytes object, "
-                     "not %.200s",
-                     _PyType_Name(Py_TYPE(format)));
-        return -1;
-    }
-    Py_SETREF(self->s_format, format);
-    if (prepare_s(self)) {
-        return -1;
-    }
-    return 0;
-}
-
-static PyObject *
-s_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-    PyStructObject *self;
-
-    if ((PyTuple_GET_SIZE(args) != 1 || kwds)
-        && PyErr_WarnEx(PyExc_DeprecationWarning,
-                        "Struct.__new__() has one positional argument", 1))
-    {
-        return NULL;
-    }
-    assert(type != NULL);
-    allocfunc alloc_func = PyType_GetSlot(type, Py_tp_alloc);
-    assert(alloc_func != NULL);
-    self = (PyStructObject *)alloc_func(type, 0);
-    if (self != NULL) {
-        self->s_format = Py_NewRef(Py_None);
-        self->s_codes = NULL;
-        self->s_size = -1;
-        self->s_len = -1;
-        self->init_called = false;
-        if (PyTuple_GET_SIZE(args) > 0) {
-            if (actual___init___impl(self, PyTuple_GET_ITEM(args, 0))) {
-                Py_DECREF(self);
-                return NULL;
-            }
-        }
-    }
-    return (PyObject *)self;
-}
-
 /*[clinic input]
-Struct.__init__
+@classmethod
+Struct.__new__ as s_new
 
     format: object
 
@@ -1828,25 +1772,49 @@ the format string.
 See help(struct) for more on format strings.
 [clinic start generated code]*/
 
-static int
-Struct___init___impl(PyStructObject *self, PyObject *format)
-/*[clinic end generated code: output=b8e80862444e92d0 input=192a4575a3dde802]*/
+static PyObject *
+s_new_impl(PyTypeObject *type, PyObject *format)
+/*[clinic end generated code: output=be61d3fb7560ccf0 input=18498baeab39c116]*/
 {
-    if (!self->init_called) {
-        if (!self->s_codes && actual___init___impl(self, format)) {
-            return -1;
+    PyStructObject *self;
+
+    assert(type != NULL);
+    allocfunc alloc_func = PyType_GetSlot(type, Py_tp_alloc);
+    assert(alloc_func != NULL);
+    self = (PyStructObject *)alloc_func(type, 0);
+    if (!self) {
+        return NULL;
+    }
+    self->s_format = Py_NewRef(Py_None);
+    self->s_codes = NULL;
+    self->s_size = -1;
+    self->s_len = -1;
+    self->init_called = false;
+    if (PyUnicode_Check(format)) {
+        format = PyUnicode_AsASCIIString(format);
+        if (format == NULL) {
+            Py_DECREF(self);
+            return NULL;
         }
-        self->init_called = true;
-        return 0;
     }
-    if ((self->s_codes && self->init_called)
-        && PyErr_WarnEx(PyExc_DeprecationWarning,
-                        ("Explicit call of __init__() on "
-                         "initialized Struct() is deprecated"), 1))
-    {
-        return -1;
+    else {
+        Py_INCREF(format);
     }
-    return actual___init___impl(self, format);
+    if (!PyBytes_Check(format)) {
+        Py_DECREF(format);
+        Py_DECREF(self);
+        PyErr_Format(PyExc_TypeError,
+                     "Struct() argument 1 must be a str or bytes object, "
+                     "not %.200s",
+                     _PyType_Name(Py_TYPE(format)));
+        return NULL;
+    }
+    Py_SETREF(self->s_format, format);
+    if (prepare_s(self)) {
+        Py_DECREF(self);
+        return NULL;
+    }
+    return (PyObject *)self;
 }
 
 static int
@@ -2488,7 +2456,6 @@ static PyType_Slot PyStructType_slots[] = {
     {Py_tp_methods, s_methods},
     {Py_tp_members, s_members},
     {Py_tp_getset, s_getsetlist},
-    {Py_tp_init, Struct___init__},
     {Py_tp_new, s_new},
     {0, 0},
 };

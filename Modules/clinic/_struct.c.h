@@ -9,7 +9,7 @@ preserve
 #include "pycore_abstract.h"      // _PyNumber_Index()
 #include "pycore_modsupport.h"    // _PyArg_UnpackKeywords()
 
-PyDoc_STRVAR(Struct___init____doc__,
+PyDoc_STRVAR(s_new__doc__,
 "Struct(format)\n"
 "--\n"
 "\n"
@@ -20,13 +20,13 @@ PyDoc_STRVAR(Struct___init____doc__,
 "\n"
 "See help(struct) for more on format strings.");
 
-static int
-Struct___init___impl(PyStructObject *self, PyObject *format);
+static PyObject *
+s_new_impl(PyTypeObject *type, PyObject *format);
 
-static int
-Struct___init__(PyObject *self, PyObject *args, PyObject *kwargs)
+static PyObject *
+s_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    int return_value = -1;
+    PyObject *return_value = NULL;
     #if defined(Py_BUILD_CORE) && !defined(Py_BUILD_CORE_MODULE)
 
     #define NUM_KEYWORDS 1
@@ -65,7 +65,7 @@ Struct___init__(PyObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
     format = fastargs[0];
-    return_value = Struct___init___impl((PyStructObject *)self, format);
+    return_value = s_new_impl(type, format);
 
 exit:
     return return_value;
@@ -458,4 +458,4 @@ exit:
 
     return return_value;
 }
-/*[clinic end generated code: output=caa7f36443e91cb9 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=73deacdfe09bb1a7 input=a9049054013a1b77]*/

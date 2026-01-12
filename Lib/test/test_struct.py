@@ -575,12 +575,11 @@ class StructTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         # Struct instance.  This test can be used to detect the leak
         # when running with regrtest -L.
         s = struct.Struct('i')
-        with self.assertWarns(DeprecationWarning):
-            s.__init__('ii')
-        self.assertEqual(s.format, 'ii')
+        s.__init__('ii')  # no-op
+        self.assertEqual(s.format, 'i')
         packed = b'\x01\x00\x00\x00\x02\x00\x00\x00'
-        self.assertEqual(s.pack(1, 2), packed)
-        self.assertEqual(s.unpack(packed), (1, 2))
+        self.assertRaises(struct.error, s.pack, 1, 2)
+        self.assertRaises(struct.error, s.unpack, packed)
 
     def check_sizeof(self, format_str, number_of_codes):
         # The size of 'PyStructObject'
@@ -788,9 +787,19 @@ class StructTest(ComplexesAreIdenticalMixin, unittest.TestCase):
             def __init__(self):
                 super().__init__('>h')
 
-        with self.assertWarns(DeprecationWarning):
+        with self.assertRaises(TypeError):
             my_struct = MyStruct()
-        self.assertEqual(my_struct.pack(12345), b'\x30\x39')
+
+    def test__struct_Struct__new__initialized(self):
+        # See https://github.com/python/cpython/issues/78724
+        s = struct.Struct.__new__(struct.Struct, "b")
+        s.unpack_from(b"abcd")
+
+    def test__struct_Struct_subclassing(self):
+        class Bob(struct.Struct):
+            pass
+        s = Bob("b")
+        s.unpack_from(b"abcd")
 
     def test_repr(self):
         s = struct.Struct('=i2H')
@@ -821,19 +830,6 @@ class StructTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         with InterpreterPoolExecutor(max_workers=5) as executor:
             results = executor.map(exec, [code] * 5)
             self.assertListEqual(list(results), [None] * 5)
-
-    def test_operations_on_half_initialized_Struct(self):
-        with self.assertWarns(DeprecationWarning):
-            S = struct.Struct.__new__(struct.Struct)
-
-        spam = array.array('b', b' ')
-        self.assertRaises(RuntimeError, S.iter_unpack, spam)
-        self.assertRaises(RuntimeError, S.pack, 1)
-        self.assertRaises(RuntimeError, S.pack_into, spam, 1)
-        self.assertRaises(RuntimeError, S.unpack, spam)
-        self.assertRaises(RuntimeError, S.unpack_from, spam)
-        self.assertRaises(RuntimeError, getattr, S, 'format')
-        self.assertEqual(S.size, -1)
 
 
 class UnpackIteratorTest(unittest.TestCase):
