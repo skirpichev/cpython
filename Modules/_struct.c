@@ -1785,12 +1785,14 @@ Struct.__init__
 Create a compiled struct object.
 
 Return a new Struct object which writes and reads binary data according
-to the format string.  See help(struct) for more on format strings.
+to the format string.
+
+See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static int
 Struct___init___impl(PyStructObject *self, PyObject *format)
-/*[clinic end generated code: output=b8e80862444e92d0 input=1af78a5f57d82cec]*/
+/*[clinic end generated code: output=b8e80862444e92d0 input=8be2bb69ec77b9f7]*/
 {
     int ret = 0;
 
@@ -1912,13 +1914,15 @@ Struct.unpack
 
 Return a tuple containing unpacked values.
 
-Unpack according to the format self. The buffer's size in bytes must be
-self.size.  See help(struct) for more on format strings.
+Unpack according to the format string Struct.format.  The buffer's
+size in bytes must be Struct.size.
+
+See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static PyObject *
 Struct_unpack_impl(PyStructObject *self, Py_buffer *buffer)
-/*[clinic end generated code: output=873a24faf02e848a input=5b8bdd4ec3c35bab]*/
+/*[clinic end generated code: output=873a24faf02e848a input=5ceaa6c99abe1d02]*/
 {
     _structmodulestate *state = get_struct_state_structinst(self);
     ENSURE_STRUCT_IS_READY(self);
@@ -1939,15 +1943,18 @@ Struct.unpack_from
 
 Return a tuple containing unpacked values.
 
-Values are unpacked according to the format self.  The buffer's size in
-bytes, starting at position offset, must be at least self.size.  See
-help(struct) for more on format strings.
+Values are unpacked according to the format string Struct.format.
+
+The buffer's size in bytes, starting at position offset, must be
+at least Struct.size.
+
+See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static PyObject *
 Struct_unpack_from_impl(PyStructObject *self, Py_buffer *buffer,
                         Py_ssize_t offset)
-/*[clinic end generated code: output=57fac875e0977316 input=558382eeee3c47f3]*/
+/*[clinic end generated code: output=57fac875e0977316 input=cafd4851d473c894]*/
 {
     _structmodulestate *state = get_struct_state_structinst(self);
     ENSURE_STRUCT_IS_READY(self);
@@ -2091,13 +2098,14 @@ Struct.iter_unpack
 Return an iterator yielding tuples.
 
 Tuples are unpacked from the given bytes source, like a repeated
-invocation of self.unpack_from().  Requires that the bytes length be a
-multiple of the self.size.
+invocation of unpack_from().
+
+Requires that the bytes length be a multiple of the struct size.
 [clinic start generated code]*/
 
 static PyObject *
 Struct_iter_unpack_impl(PyStructObject *self, PyObject *buffer)
-/*[clinic end generated code: output=818f89ad4afa8d64 input=5d5c404776b815a4]*/
+/*[clinic end generated code: output=818f89ad4afa8d64 input=6d65b3f3107dbc99]*/
 {
     _structmodulestate *state = get_struct_state_structinst(self);
     unpackiterobject *iter;
@@ -2225,34 +2233,36 @@ s_pack_internal(PyStructObject *soself, PyObject *const *args,
     return 0;
 }
 
+
 /*[clinic input]
-Struct.pack as s_pack
+Struct.pack
 
-    *args: array
+    *values: array
 
-Return a bytes object with args, packed according the format self.
+Pack values and return the packed bytes.
+
+Return a bytes object containing the provided values packed
+according to the format string Struct.format.
 
 See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static PyObject *
-s_pack_impl(PyStructObject *self, PyObject * const *args,
-            Py_ssize_t args_length)
-/*[clinic end generated code: output=dc06e32695719fce input=24c5c3c677d4d7e2]*/
+Struct_pack_impl(PyStructObject *self, PyObject * const *values,
+                 Py_ssize_t values_length)
+/*[clinic end generated code: output=5766e18f596cae9e input=a9bee4cacdc34dfc]*/
 {
     _structmodulestate *state = get_struct_state_structinst(self);
 
     /* Validate arguments. */
     ENSURE_STRUCT_IS_READY(self);
     assert(PyStruct_Check(self, state));
-    if (args_length != self->s_len) {
+    if (values_length != self->s_len) {
         PyErr_Format(state->StructError,
-                     "pack expected %zd items for packing (got %zd)",
-                     self->s_len, args_length);
+            "pack expected %zd items for packing (got %zd)", self->s_len, values_length);
         return NULL;
     }
 
-    /* Allocate a new string */
     PyBytesWriter *writer = PyBytesWriter_Create(self->s_size);
     if (writer == NULL) {
         return NULL;
@@ -2260,7 +2270,7 @@ s_pack_impl(PyStructObject *self, PyObject * const *args,
     char *buf = PyBytesWriter_GetData(writer);
 
     /* Call the guts */
-    if (s_pack_internal(self, args, buf, state) != 0) {
+    if (s_pack_internal(self, values, buf, state) != 0) {
         PyBytesWriter_Discard(writer);
         return NULL;
     }
@@ -2269,37 +2279,45 @@ s_pack_impl(PyStructObject *self, PyObject * const *args,
 }
 
 /*[clinic input]
-Struct.pack_into as s_pack_into
+Struct.pack_into
 
-    buffer: Py_buffer
-    offset: Py_ssize_t
+    buffer: Py_buffer(accept={rwbuffer})
+    offset as offset_obj: object
     /
-    *args: array
+    *values: array
 
-Pack args to the writtable buffer according to the format self.
+Pack values and write the packed bytes into the buffer.
 
-The packed bytes written starting at offset.  See help(struct) for more
-on format strings.
+Pack the provided values according to the format string
+Struct.format and write the packed bytes into the writable buffer
+starting at offset.  Note that the offset is a required argument.
+
+See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static PyObject *
-s_pack_into_impl(PyStructObject *self, Py_buffer *buffer, Py_ssize_t offset,
-                 PyObject * const *args, Py_ssize_t args_length)
-/*[clinic end generated code: output=40e08ea63f1d57bd input=687fd92ef694b362]*/
+Struct_pack_into_impl(PyStructObject *self, Py_buffer *buffer,
+                      PyObject *offset_obj, PyObject * const *values,
+                      Py_ssize_t values_length)
+/*[clinic end generated code: output=b0c2ef496135dad3 input=5a8d13d13d30be64]*/
 {
+    Py_ssize_t offset;
     _structmodulestate *state = get_struct_state_structinst(self);
 
-    /* Validate arguments.  +1 is for the first arg as buffer. */
     ENSURE_STRUCT_IS_READY(self);
     assert(PyStruct_Check(self, state));
-    if (args_length != self->s_len) {
+    if (values_length != self->s_len) {
         PyErr_Format(state->StructError,
                      "pack_into expected %zd items for packing (got %zd)",
-                     self->s_len, args_length);
-        PyBuffer_Release(buffer);
+                     self->s_len, values_length);
         return NULL;
     }
-    assert(buffer->len >= 0);
+
+    /* Extract the offset from the first argument */
+    offset = PyNumber_AsSsize_t(offset_obj, PyExc_IndexError);
+    if (offset == -1 && PyErr_Occurred()) {
+        return NULL;
+    }
 
     /* Support negative offsets. */
     if (offset < 0) {
@@ -2309,7 +2327,6 @@ s_pack_into_impl(PyStructObject *self, Py_buffer *buffer, Py_ssize_t offset,
                          "no space to pack %zd bytes at offset %zd",
                          self->s_size,
                          offset);
-            PyBuffer_Release(buffer);
             return NULL;
         }
 
@@ -2319,7 +2336,6 @@ s_pack_into_impl(PyStructObject *self, Py_buffer *buffer, Py_ssize_t offset,
                          "offset %zd out of range for %zd-byte buffer",
                          offset,
                          buffer->len);
-            PyBuffer_Release(buffer);
             return NULL;
         }
 
@@ -2339,61 +2355,40 @@ s_pack_into_impl(PyStructObject *self, Py_buffer *buffer, Py_ssize_t offset,
                      self->s_size,
                      offset,
                      buffer->len);
-        PyBuffer_Release(buffer);
         return NULL;
     }
 
     /* Call the guts */
-    if (s_pack_internal(self, args, (char*)buffer->buf + offset, state) != 0)
-    {
-        PyBuffer_Release(buffer);
+    if (s_pack_internal(self, values, (char*)buffer->buf + offset, state) != 0) {
         return NULL;
     }
 
-    PyBuffer_Release(buffer);
     Py_RETURN_NONE;
 }
 
-/*[clinic input]
-@getter
-Struct.format as s_get_format
-
-Struct format string.
-[clinic start generated code]*/
-
 static PyObject *
-s_get_format_get_impl(PyStructObject *self)
-/*[clinic end generated code: output=16ee02604fef5898 input=05fccee7547f0796]*/
+s_get_format(PyObject *op, void *Py_UNUSED(closure))
 {
+    PyStructObject *self = PyStructObject_CAST(op);
     ENSURE_STRUCT_IS_READY(self);
     return PyUnicode_FromStringAndSize(PyBytes_AS_STRING(self->s_format),
                                        PyBytes_GET_SIZE(self->s_format));
 }
 
-/*[clinic input]
-@getter
-Struct.size as s_get_size
-
-Struct size in bytes.
-[clinic start generated code]*/
-
 static PyObject *
-s_get_size_get_impl(PyStructObject *self)
-/*[clinic end generated code: output=9cf037ff73fd4224 input=2870dd5b688f313a]*/
+s_get_size(PyObject *op, void *Py_UNUSED(closure))
 {
+    PyStructObject *self = PyStructObject_CAST(op);
     return PyLong_FromSsize_t(self->s_size);
 }
 
 /*[clinic input]
-Struct.__sizeof__ as s_sizeof
-
-Size of the self in memory, in bytes.
+Struct.__sizeof__
 [clinic start generated code]*/
 
 static PyObject *
-s_sizeof_impl(PyStructObject *self)
-/*[clinic end generated code: output=5994296a8236f514 input=9d260684863a7618]*/
-
+Struct___sizeof___impl(PyStructObject *self)
+/*[clinic end generated code: output=2d0d78900b4cdb4e input=faca5925c1f1ffd0]*/
 {
     size_t size = _PyObject_SIZE(Py_TYPE(self)) + sizeof(formatcode);
     for (formatcode *code = self->s_codes; code->fmtdef != NULL; code++) {
@@ -2420,11 +2415,11 @@ s_repr(PyObject *op)
 
 static struct PyMethodDef s_methods[] = {
     STRUCT_ITER_UNPACK_METHODDEF
-    S_PACK_METHODDEF
-    S_PACK_INTO_METHODDEF
+    STRUCT_PACK_METHODDEF
+    STRUCT_PACK_INTO_METHODDEF
     STRUCT_UNPACK_METHODDEF
     STRUCT_UNPACK_FROM_METHODDEF
-    S_SIZEOF_METHODDEF
+    STRUCT___SIZEOF___METHODDEF
     {NULL,       NULL}          /* sentinel */
 };
 
@@ -2434,8 +2429,8 @@ static PyMemberDef s_members[] = {
 };
 
 static PyGetSetDef s_getsetlist[] = {
-    S_GET_FORMAT_GETSETDEF
-    S_GET_SIZE_GETSETDEF
+    {"format", s_get_format, NULL, PyDoc_STR("struct format string"), NULL},
+    {"size", s_get_size, NULL, PyDoc_STR("struct size in bytes"), NULL},
     {NULL} /* sentinel */
 };
 
@@ -2539,43 +2534,50 @@ pack
 
     format as s_object: cache_struct
     /
-    *args: array
+    *values: array
 
-Return a bytes object with args, packed according the format string.
+Pack values and return the packed bytes.
+
+Return a bytes object containing the provided values packed according
+to the format string.
 
 See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static PyObject *
-pack_impl(PyObject *module, PyStructObject *s_object, PyObject * const *args,
-          Py_ssize_t args_length)
-/*[clinic end generated code: output=3c490d3313013a77 input=7ad2023f64935c39]*/
+pack_impl(PyObject *module, PyStructObject *s_object,
+          PyObject * const *values, Py_ssize_t values_length)
+/*[clinic end generated code: output=2f874191ddecdec0 input=aed5199c808107d3]*/
 {
-    return s_pack_impl(s_object, args, args_length);
+    return Struct_pack_impl(s_object, values, values_length);
 }
 
 /*[clinic input]
 pack_into
 
     format as s_object: cache_struct
-    buffer: Py_buffer
-    offset: Py_ssize_t
+    buffer: Py_buffer(accept={rwbuffer})
+    offset as offset_obj: object
     /
-    *args: array
+    *values: array
 
-Pack args to the writtable buffer according to the format string.
+Pack values and write the packed bytes into the buffer.
 
-The packed bytes written starting at offset.  See help(struct) for more
-on format strings.
+Pack the provided values according to the format string and write the
+packed bytes into the writable buffer starting at offset.  Note that the
+offset is a required argument.
+
+See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static PyObject *
 pack_into_impl(PyObject *module, PyStructObject *s_object, Py_buffer *buffer,
-               Py_ssize_t offset, PyObject * const *args,
-               Py_ssize_t args_length)
-/*[clinic end generated code: output=86bd2d8d0628b540 input=4ace36b845e3167e]*/
+               PyObject *offset_obj, PyObject * const *values,
+               Py_ssize_t values_length)
+/*[clinic end generated code: output=148ef659a490eec3 input=e0d682139a9c7f19]*/
 {
-    return s_pack_into_impl(s_object, buffer, offset, args, args_length);
+    return Struct_pack_into_impl(s_object, buffer, offset_obj,
+                                 values, values_length);
 }
 
 /*[clinic input]
@@ -2587,13 +2589,14 @@ unpack
 
 Return a tuple containing values unpacked according to the format string.
 
-The buffer's size in bytes must be calcsize(format).  See help(struct)
-for more on format strings.
+The buffer's size in bytes must be calcsize(format).
+
+See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static PyObject *
 unpack_impl(PyObject *module, PyStructObject *s_object, Py_buffer *buffer)
-/*[clinic end generated code: output=48ddd4d88eca8551 input=7df28c5d0b5b6f4e]*/
+/*[clinic end generated code: output=48ddd4d88eca8551 input=05fa3b91678da727]*/
 {
     return Struct_unpack_impl(s_object, buffer);
 }
@@ -2608,14 +2611,15 @@ unpack_from
 
 Return a tuple containing values unpacked according to the format string.
 
-The buffer's size, minus offset, must be at least calcsize(format).  See
-help(struct) for more on format strings.
+The buffer's size, minus offset, must be at least calcsize(format).
+
+See help(struct) for more on format strings.
 [clinic start generated code]*/
 
 static PyObject *
 unpack_from_impl(PyObject *module, PyStructObject *s_object,
                  Py_buffer *buffer, Py_ssize_t offset)
-/*[clinic end generated code: output=1042631674c6e0d3 input=599262b23559f6c5]*/
+/*[clinic end generated code: output=1042631674c6e0d3 input=6e80a5398e985025]*/
 {
     return Struct_unpack_from_impl(s_object, buffer, offset);
 }
@@ -2629,16 +2633,16 @@ iter_unpack
 
 Return an iterator yielding tuples unpacked from the given bytes.
 
-The bytes are unpacked according to the format string, like a repeated
-invocation of unpack_from().  Requires that the bytes length be a
-multiple of the format struct size.  See help(struct) for more on format
-strings.
+The bytes are unpacked according to the format string, like
+a repeated invocation of unpack_from().
+
+Requires that the bytes length be a multiple of the format struct size.
 [clinic start generated code]*/
 
 static PyObject *
 iter_unpack_impl(PyObject *module, PyStructObject *s_object,
                  PyObject *buffer)
-/*[clinic end generated code: output=0ae50e250d20e74d input=98fff4c9e3fa70db]*/
+/*[clinic end generated code: output=0ae50e250d20e74d input=b214a58869a3c98d]*/
 {
     return Struct_iter_unpack((PyObject*)s_object, buffer);
 }
