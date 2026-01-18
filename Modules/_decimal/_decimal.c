@@ -30,6 +30,7 @@
 #endif
 
 #include <Python.h>
+#include "pycore_freelist.h"      // _Py_FREELIST_POP()
 #include "pycore_object.h"        // _PyObject_VisitType()
 #include "pycore_pystate.h"       // _PyThreadState_GET()
 #include "pycore_typeobject.h"
@@ -2196,7 +2197,10 @@ PyDecType_New(decimal_state *state, PyTypeObject *type)
     PyDecObject *dec;
 
     if (type == state->PyDec_Type) {
-        dec = PyObject_GC_New(PyDecObject, state->PyDec_Type);
+        dec = _Py_FREELIST_POP(PyDecObject, decimals);
+        if (dec == NULL) {
+            dec = PyObject_GC_New(PyDecObject, state->PyDec_Type);
+        }
     }
     else {
         dec = (PyDecObject *)type->tp_alloc(type, 0);
@@ -2226,10 +2230,16 @@ static void
 dec_dealloc(PyObject *dec)
 {
     PyTypeObject *tp = Py_TYPE(dec);
+    decimal_state *state = get_module_state_by_def(tp);
+
     PyObject_GC_UnTrack(dec);
     mpd_del(MPD(dec));
-    tp->tp_free(dec);
-    Py_DECREF(tp);
+    if (!PyDec_CheckExact(state, dec)
+        || !_Py_FREELIST_PUSH(decimals, dec, Py_decimals_MAXFREELIST))
+    {
+        tp->tp_free(dec);
+        Py_DECREF(tp);
+    }
 }
 
 
