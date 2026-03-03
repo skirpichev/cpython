@@ -821,6 +821,85 @@ exit:
     return return_value;
 }
 
+static PyObject *
+dec_vectorcall(PyObject *type, PyObject *const *args,
+    size_t nargsf, PyObject *kwnames)
+{
+    PyObject *return_value = NULL;
+    Py_ssize_t nargs = PyVectorcall_NARGS(nargsf);
+    PyObject *value = NULL;
+    PyObject *context = Py_None;
+
+    if (kwnames == NULL) {
+        if (!_PyArg_CheckPositional("Decimal", nargs, 0, 2)) {
+            goto exit;
+        }
+        if (nargs < 1) {
+            goto skip_optional_vc_fast;
+        }
+        value = args[0];
+        if (nargs < 2) {
+            goto skip_optional_vc_fast;
+        }
+        context = args[1];
+    skip_optional_vc_fast:
+        goto vc_fast_end;
+    }
+    #if defined(Py_BUILD_CORE) && !defined(Py_BUILD_CORE_MODULE)
+
+    #define NUM_KEYWORDS 2
+    static struct {
+        PyGC_Head _this_is_not_used;
+        PyObject_VAR_HEAD
+        Py_hash_t ob_hash;
+        PyObject *ob_item[NUM_KEYWORDS];
+    } _kwtuple = {
+        .ob_base = PyVarObject_HEAD_INIT(&PyTuple_Type, NUM_KEYWORDS)
+        .ob_hash = -1,
+        .ob_item = { &_Py_ID(value), &_Py_ID(context), },
+    };
+    #undef NUM_KEYWORDS
+    #define KWTUPLE (&_kwtuple.ob_base.ob_base)
+
+    #else  // !Py_BUILD_CORE
+    #  define KWTUPLE NULL
+    #endif  // !Py_BUILD_CORE
+
+    static const char * const _keywords[] = {"value", "context", NULL};
+    static _PyArg_Parser _parser = {
+        .keywords = _keywords,
+        .fname = "Decimal",
+        .kwtuple = KWTUPLE,
+    };
+    #undef KWTUPLE
+    PyObject *argsbuf[2];
+    Py_ssize_t noptargs = nargs + (kwnames ? PyTuple_GET_SIZE(kwnames) : 0) - 0;
+    args = _PyArg_UnpackKeywords(args, nargs, NULL, kwnames,
+        &_parser,
+        /*minpos*/ 0, /*maxpos*/ 2,
+        /*minkw*/ 0,
+        /*varpos*/ 0, argsbuf);
+    if (!args) {
+        goto exit;
+    }
+    if (!noptargs) {
+        goto skip_optional_pos_vc;
+    }
+    if (args[0]) {
+        value = args[0];
+        if (!--noptargs) {
+            goto skip_optional_pos_vc;
+        }
+    }
+    context = args[1];
+skip_optional_pos_vc:
+vc_fast_end:
+    return_value = dec_new_impl(_PyType_CAST(type), value, context);
+
+exit:
+    return return_value;
+}
+
 PyDoc_STRVAR(_decimal_Context_create_decimal__doc__,
 "create_decimal($self, num=\'0\', /)\n"
 "--\n"
@@ -6980,4 +7059,4 @@ exit:
 #ifndef _DECIMAL_CONTEXT_APPLY_METHODDEF
     #define _DECIMAL_CONTEXT_APPLY_METHODDEF
 #endif /* !defined(_DECIMAL_CONTEXT_APPLY_METHODDEF) */
-/*[clinic end generated code: output=b288181c82fdc9f1 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=39da821eb69ac56e input=a9049054013a1b77]*/
