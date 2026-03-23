@@ -47,7 +47,13 @@ _Py_parse_inf_or_nan(const char *p, char **endptr)
     }
     else if (case_insensitive_match(s, "nan")) {
         s += 3;
-        retval = negate ? -fabs(Py_NAN) : fabs(Py_NAN);
+        retval = nan(s);
+        if (negate) {
+            retval = -retval;
+        }
+        while (isdigit(*s)) {
+            s++;
+        }
     }
     else {
         s = p;
@@ -399,6 +405,15 @@ _Py_string_to_number_with_underscores(
                  "could not convert string to %s: "
                  "%R", what, obj);
     return NULL;
+}
+
+static uint64_t
+get_payload(double x)
+{
+    uint64_t r;
+
+    memcpy(&r, &x, sizeof(x));
+    return r & 0x7ffffffffffffULL;
 }
 
 #if _PY_SHORT_FLOAT_REPR == 0
@@ -765,6 +780,7 @@ char * PyOS_double_to_string(double val,
     char *buf;
     int t, exp;
     int upper = 0;
+    int64_t payload = 0;
 
     /* Validate format_code, and map upper and lower case */
     switch (format_code) {
@@ -842,9 +858,16 @@ char * PyOS_double_to_string(double val,
 
     */
 
-    if (isnan(val) || isinf(val))
+    if (isnan(val) || isinf(val)) {
         /* 3 for 'inf'/'nan', 1 for sign, 1 for '\0' */
         bufsize = 5;
+        if (isnan(val)) {
+            payload = get_payload(val);
+            if (payload) {
+                bufsize += floor(log10(payload)) + 1;
+            }
+        }
+    }
     else {
         bufsize = 25 + precision;
         if (format_code == 'f' && fabs(val) >= 1.0) {
@@ -861,7 +884,12 @@ char * PyOS_double_to_string(double val,
 
     /* Handle nan and inf. */
     if (isnan(val)) {
-        strcpy(buf, "nan");
+        if (payload) {
+            sprintf(buf, "nan%" PRId64, payload);
+        }
+        else {
+            strcpy(buf, "nan");
+        }
         t = Py_DTST_NAN;
     } else if (isinf(val)) {
         if (copysign(1., val) == 1.)
@@ -978,6 +1006,7 @@ format_float_short(double d, char format_code,
     char *digits, *digits_end;
     int decpt_as_int, sign, exp_len, exp = 0, use_exp = 0;
     Py_ssize_t decpt, digits_len, vdigits_start, vdigits_end;
+    uint64_t payload = 0;
     _Py_SET_53BIT_PRECISION_HEADER;
 
     /* _Py_dg_dtoa returns a digit string (no decimal point or exponent).
@@ -1012,6 +1041,12 @@ format_float_short(double d, char format_code,
 
         /* We only need 5 bytes to hold the result "+inf\0" . */
         bufsize = 5; /* Used later in an assert. */
+        if (isnan(d)) {
+            payload = get_payload(d);
+            if (payload) {
+                bufsize += floor(log10(payload)) + 1;
+            }
+        }
         buf = (char *)PyMem_Malloc(bufsize);
         if (buf == NULL) {
             PyErr_NoMemory();
@@ -1035,7 +1070,9 @@ format_float_short(double d, char format_code,
         else if (digits[0] == 'n' || digits[0] == 'N') {
             strncpy(p, float_strings[OFS_NAN], 3);
             p += 3;
-
+            if (payload) {
+                p += sprintf(p, "%" PRId64, payload);
+            }
             if (type)
                 *type = Py_DTST_NAN;
         }

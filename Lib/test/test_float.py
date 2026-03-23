@@ -1014,6 +1014,8 @@ class RoundTestCase(unittest.TestCase, FloatsAreIdenticalMixin):
             fmt = fmt[1:] # strip off the %
             self.assertEqual(format(value, fmt), expected, fmt)
 
+        pnan = float('nan123')
+
         for fmt in ['%e', '%f', '%g', '%.0e', '%.6f', '%.20g',
                     '%#e', '%#f', '%#g', '%#.20e', '%#.15f', '%#.3g']:
             pfmt = '%+' + fmt[1:]
@@ -1022,18 +1024,24 @@ class RoundTestCase(unittest.TestCase, FloatsAreIdenticalMixin):
             test(fmt, -INF, '-inf')
             test(fmt, NAN, 'nan')
             test(fmt, -NAN, 'nan')
+            test(fmt, pnan, 'nan123')
+            test(fmt, -pnan, 'nan123')
             # When asking for a sign, it's always provided. nans are
             #  always positive.
             test(pfmt, INF, '+inf')
             test(pfmt, -INF, '-inf')
             test(pfmt, NAN, '+nan')
             test(pfmt, -NAN, '+nan')
+            test(pfmt, pnan, '+nan123')
+            test(pfmt, -pnan, '+nan123')
             # When using ' ' for a sign code, only infs can be negative.
             #  Others have a space.
             test(sfmt, INF, ' inf')
             test(sfmt, -INF, '-inf')
             test(sfmt, NAN, ' nan')
             test(sfmt, -NAN, ' nan')
+            test(sfmt, pnan, ' nan123')
+            test(sfmt, -pnan, ' nan123')
 
     def test_None_ndigits(self):
         for x in round(1.23), round(1.23, None), round(1.23, ndigits=None):
