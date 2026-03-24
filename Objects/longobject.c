@@ -2600,30 +2600,38 @@ long_from_binary_base(const char *start, const char *end, Py_ssize_t digits, int
     return 0;
 }
 
-#ifdef WITH_PYLONG_MODULE
-/* asymptotically faster str-to-long conversion for base 10, using _pylong.py */
+static PyObject * zz_to_int(const zz_t *z);
+
+/* asymptotically faster str-to-long conversion for base 10 */
 static int
-pylong_int_from_string(const char *start, const char *end, PyLongObject **res)
+libzz_int_from_string(const char *start, const char *end, PyLongObject **res)
 {
-    PyObject *mod = PyImport_ImportModule("_pylong");
-    if (mod == NULL) {
-        goto error;
-    }
     PyObject *s = PyUnicode_FromStringAndSize(start, end-start);
+
     if (s == NULL) {
-        Py_DECREF(mod);
         goto error;
     }
-    PyObject *result = PyObject_CallMethod(mod, "int_from_string", "O", s);
+
+    const char *str = PyUnicode_AsUTF8(s);
+
+    if (!str) {
+        Py_DECREF(s);
+        goto error;
+    }
+
+    zz_t z;
+
+    if (zz_init(&z) || zz_set_str(str, 10, &z)) {
+        zz_clear(&z);
+        Py_DECREF(s);
+        goto error;
+    }
     Py_DECREF(s);
-    Py_DECREF(mod);
+
+    PyObject *result = zz_to_int(&z);
+
+    zz_clear(&z);
     if (result == NULL) {
-        goto error;
-    }
-    if (!PyLong_Check(result)) {
-        Py_DECREF(result);
-        PyErr_SetString(PyExc_TypeError,
-                        "_pylong.int_from_string did not return an int");
         goto error;
     }
     *res = (PyLongObject *)result;
@@ -2632,7 +2640,6 @@ error:
     *res = NULL;
     return 0;  // See the long_from_string_base() API comment.
 }
-#endif /* WITH_PYLONG_MODULE */
 
 /***
 long_from_non_binary_base: parameters and return values are the same as
@@ -2983,7 +2990,7 @@ long_from_string_base(const char **str, int base, PyLongObject **res)
 #if WITH_PYLONG_MODULE
         if (digits > 6000 && base == 10) {
             /* Switch to _pylong.int_from_string() */
-            return pylong_int_from_string(start, end, res);
+            return libzz_int_from_string(start, end, res);
         }
 #endif
         /* Use the quadratic algorithm for non binary bases. */
