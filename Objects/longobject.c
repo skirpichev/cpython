@@ -31,9 +31,6 @@ class int "PyObject *" "&PyLong_Type"
 #define _MAX_STR_DIGITS_ERROR_FMT_TO_INT "Exceeds the limit (%d digits) for integer string conversion: value has %zd digits; use sys.set_int_max_str_digits() to increase the limit"
 #define _MAX_STR_DIGITS_ERROR_FMT_TO_STR "Exceeds the limit (%d digits) for integer string conversion; use sys.set_int_max_str_digits() to increase the limit"
 
-/* If defined, use algorithms from the _pylong.py module */
-#define WITH_PYLONG_MODULE 1
-
 // Forward declarations
 static PyLongObject* long_neg(PyLongObject *v);
 static PyLongObject *x_divrem(PyLongObject *, PyLongObject *, PyLongObject **);
@@ -2907,8 +2904,7 @@ long_from_non_binary_base(const char *start, const char *end, Py_ssize_t digits,
  * Return values:
  *
  *   - Returns -1 on syntax error (exception needs to be set, *res is untouched)
- *   - Returns 0 and sets *res to NULL for MemoryError, OverflowError, or
- *     _pylong.int_from_string() errors.
+ *   - Returns 0 and sets *res to NULL for MemoryError, OverflowError
  *   - Returns 0 and sets *res to an unsigned, unnormalized PyLong (success!).
  *
  * Afterwards *str is set to point to the first non-digit (which may be *str!).
@@ -2987,12 +2983,9 @@ long_from_string_base(const char **str, int base, PyLongObject **res)
                 return 0;
             }
         }
-#if WITH_PYLONG_MODULE
         if (digits > 6000 && base == 10) {
-            /* Switch to _pylong.int_from_string() */
             return libzz_int_from_string(start, end, res);
         }
-#endif
         /* Use the quadratic algorithm for non binary bases. */
         return long_from_non_binary_base(start, end, digits, base, res);
     }
@@ -4156,45 +4149,36 @@ fast_floor_div(PyLongObject *a, PyLongObject *b)
     return PyLong_FromLong(div);
 }
 
-#ifdef WITH_PYLONG_MODULE
-/* asymptotically faster divmod, using _pylong.py */
+/* asymptotically faster divmod */
 static int
-pylong_int_divmod(PyLongObject *v, PyLongObject *w,
+libzz_int_divmod(PyLongObject *v, PyLongObject *w,
                   PyLongObject **pdiv, PyLongObject **pmod)
 {
-    PyObject *mod = PyImport_ImportModule("_pylong");
-    if (mod == NULL) {
+    zz_t zv, zw, q, r;
+
+    if (zz_init(&zv) || zz_init(&zw) || zz_init(&q) || zz_init(&r)
+        || zz_from_int((PyObject *)v, &zv)
+        || zz_from_int((PyObject *)w, &zw)
+        || zz_div(&zv, &zw, &q, &r))
+    {
+        zz_clear(&zv);
+        zz_clear(&zw);
+        zz_clear(&q);
+        zz_clear(&r);
         return -1;
     }
-    PyObject *result = PyObject_CallMethod(mod, "int_divmod", "OO", v, w);
-    Py_DECREF(mod);
-    if (result == NULL) {
-        return -1;
-    }
-    if (!PyTuple_Check(result) || PyTuple_GET_SIZE(result) != 2) {
-        Py_DECREF(result);
-        PyErr_SetString(PyExc_ValueError,
-                        "tuple of length 2 is required from int_divmod()");
-        return -1;
-    }
-    PyObject *q = PyTuple_GET_ITEM(result, 0);
-    PyObject *r = PyTuple_GET_ITEM(result, 1);
-    if (!PyLong_Check(q) || !PyLong_Check(r)) {
-        Py_DECREF(result);
-        PyErr_SetString(PyExc_ValueError,
-                        "tuple of int is required from int_divmod()");
-        return -1;
-    }
+    zz_clear(&zv);
+    zz_clear(&zw);
     if (pdiv != NULL) {
-        *pdiv = (PyLongObject *)Py_NewRef(q);
+        *pdiv = (PyLongObject *)zz_to_int(&q);
     }
+    zz_clear(&q);
     if (pmod != NULL) {
-        *pmod = (PyLongObject *)Py_NewRef(r);
+        *pmod = (PyLongObject *)zz_to_int(&r);
     }
-    Py_DECREF(result);
+    zz_clear(&r);
     return 0;
 }
-#endif /* WITH_PYLONG_MODULE */
 
 /* The / and % operators are now defined in terms of divmod().
    The expression a mod b has the value a - b*floor(a/b).
@@ -4247,18 +4231,11 @@ l_divmod(PyLongObject *v, PyLongObject *w,
         }
         return 0;
     }
-#if WITH_PYLONG_MODULE
     Py_ssize_t size_v = _PyLong_DigitCount(v); /* digits in numerator */
     Py_ssize_t size_w = _PyLong_DigitCount(w); /* digits in denominator */
     if (size_w > 300 && (size_v - size_w) > 150) {
-        /* Switch to _pylong.int_divmod().  If the quotient is small then
-          "schoolbook" division is linear-time so don't use in that case.
-          These limits are empirically determined and should be slightly
-          conservative so that _pylong is used in cases it is likely
-          to be faster. See Tools/scripts/divmod_threshold.py. */
-        return pylong_int_divmod(v, w, pdiv, pmod);
+        return libzz_int_divmod(v, w, pdiv, pmod);
     }
-#endif
     if (long_divrem(v, w, &div, &mod) < 0)
         return -1;
     if ((_PyLong_IsNegative(mod) && _PyLong_IsPositive(w)) ||
