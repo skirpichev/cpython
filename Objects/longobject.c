@@ -1957,27 +1957,49 @@ rem1(PyLongObject *a, digit n)
     );
 }
 
-#ifdef WITH_PYLONG_MODULE
-/* asymptotically faster long_to_decimal_string, using _pylong.py */
+#include <zz/zz.h>
+
+static zz_err zz_from_int(PyObject *obj, zz_t *r);
+
+/* asymptotically faster long_to_decimal_string */
 static int
-pylong_int_to_decimal_string(PyObject *aa,
-                             PyObject **p_output,
-                             _PyUnicodeWriter *writer,
-                             PyBytesWriter *bytes_writer,
-                             char **bytes_str)
+libzz_int_to_decimal_string(PyObject *aa,
+                            PyObject **p_output,
+                            _PyUnicodeWriter *writer,
+                            PyBytesWriter *bytes_writer,
+                            char **bytes_str)
 {
-    PyObject *s = NULL;
-    PyObject *mod = PyImport_ImportModule("_pylong");
-    if (mod == NULL) {
+    zz_t at;
+
+    if (zz_init(&at) || zz_from_int(aa, &at)) {
+        zz_clear(&at);
         return -1;
     }
-    s = PyObject_CallMethod(mod, "int_to_decimal_string", "O", aa);
-    if (s == NULL) {
-        goto error;
+
+    size_t len = 0;
+
+    zz_sizeinbase(&at, 10, &len);
+    len += zz_isneg(&at) + 1;
+
+    char *buf = PyMem_Malloc(len);
+
+    if (!buf) {
+        zz_clear(&at);
+        return -1;
     }
-    if (!PyUnicode_Check(s)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "_pylong.int_to_decimal_string did not return a str");
+    zz_err ret = zz_get_str(&at, 10, buf);
+
+    if (ret) {
+        zz_clear(&at);
+        PyMem_Free(buf);
+        return -1;
+    }
+    zz_clear(&at);
+    
+    PyObject *s = PyUnicode_FromString(buf);
+
+    PyMem_Free(buf);
+    if (s == NULL) {
         goto error;
     }
     if (writer) {
@@ -2013,16 +2035,13 @@ pylong_int_to_decimal_string(PyObject *aa,
     }
 
 error:
-        Py_DECREF(mod);
         Py_XDECREF(s);
         return -1;
 
 success:
-        Py_DECREF(mod);
         Py_DECREF(s);
         return 0;
 }
-#endif /* WITH_PYLONG_MODULE */
 
 /* Convert an integer to a base 10 string.  Returns a new non-shared
    string.  (Return value is non-shared so that callers can modify the
@@ -2070,16 +2089,13 @@ long_to_decimal_string_internal(PyObject *aa,
         }
     }
 
-#if WITH_PYLONG_MODULE
     if (size_a > 1000) {
-        /* Switch to _pylong.int_to_decimal_string(). */
-        return pylong_int_to_decimal_string(aa,
-                                         p_output,
-                                         writer,
-                                         bytes_writer,
-                                         bytes_str);
+        return libzz_int_to_decimal_string(aa,
+                                           p_output,
+                                           writer,
+                                           bytes_writer,
+                                           bytes_str);
     }
-#endif
 
     /* quick and dirty upper bound for the number of digits
        required to express a in base _PyLong_DECIMAL_BASE:
@@ -3968,8 +3984,6 @@ x_mul(PyLongObject *a, PyLongObject *b)
     }
     return long_normalize(z);
 }
-
-#include <zz/zz.h>
 
 static zz_err
 zz_from_int(PyObject *obj, zz_t *r)
