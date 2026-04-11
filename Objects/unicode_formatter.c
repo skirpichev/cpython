@@ -1385,7 +1385,7 @@ format_long_internal(PyObject *value, const InternalFormatSpec *format,
                 if (precision > orig_precision) {
                     shift = orig_precision*dbits - 1;
                     PyErr_Format(PyExc_OverflowError,
-                                 "Expected integer in range [-2**%ld, 2**%ld)",
+                                 "Expected integer in range(-2**%ld, 2**%ld)",
                                  shift, shift);
                     goto done;
                 }
