@@ -529,7 +529,7 @@ class HelpFormatter(object):
         """Apply color markup to text.
 
         Supported markup:
-          `...` - inline code (rendered with prog_extra color)
+          `...` or ``...`` - inline code (rendered with prog_extra color)
 
         When colors are disabled, backticks are preserved as-is.
         """
@@ -537,8 +537,8 @@ class HelpFormatter(object):
         if not t.reset:
             return text
         text = _re.sub(
-            r'`([^`]+)`',
-            rf'{t.prog_extra}\1{t.reset}',
+            r'(`{1,2})([^`]+)\1',
+            rf'{t.prog_extra}\2{t.reset}',
             text,
         )
         return text
@@ -682,7 +682,7 @@ class HelpFormatter(object):
     def _expand_help(self, action):
         help_string = self._get_help_string(action)
         if '%' not in help_string:
-            return help_string
+            return self._apply_text_markup(help_string)
         params = dict(vars(action), prog=self._prog)
         for name in list(params):
             value = params[name]
@@ -726,7 +726,9 @@ class HelpFormatter(object):
             # bare %s etc. - format with full params dict, no colorization
             return spec % params
 
-        return _re.sub(fmt_spec, colorize, help_string, flags=_re.VERBOSE)
+        return self._apply_text_markup(
+            _re.sub(fmt_spec, colorize, help_string, flags=_re.VERBOSE)
+        )
 
     def _iter_indented_subactions(self, action):
         try:
