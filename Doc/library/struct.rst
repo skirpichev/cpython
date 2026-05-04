@@ -280,6 +280,9 @@ platform-dependent.
 .. versionchanged:: 3.14
    Added support for the ``'F'`` and ``'D'`` formats.
 
+.. deprecated-removed:: 3.15 3.17
+   Support for the ``'F'`` and ``'D'`` formats.
+
 .. seealso::
 
    The :mod:`array` and :ref:`ctypes <ctypes-fundamental-data-types>` modules,

@@ -37,6 +37,15 @@ Pending removal in Python 3.17
     is deprecated and scheduled for removal in Python 3.17.
     (Contributed by Stan Ulbrych in :gh:`136702`.)
 
+
+* :mod:`struct`:
+
+  - Support the :c:expr:`float complex` and :c:expr:`double complex` C types in
+    the :mod:`struct` module (formatting characters ``'F'`` and ``'D'``
+    respectively).
+    (Contributed by Sergey B Kirpichev in :gh:`121249`.)
+
+
 * :mod:`typing`:
 
   - Before Python 3.14, old-style unions were implemented using the private class
