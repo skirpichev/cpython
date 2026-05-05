@@ -1653,6 +1653,14 @@ wave
 (Contributed by Lionel Koenig and Michiel W. Beijen in :gh:`60729`.)
 
 
+xml
+---
+
+* Add the :func:`xml.is_valid_name` function, which allows to check
+  whether a string can be used as an element or attribute name in XML.
+  (Contributed by Serhiy Storchaka in :gh:`139489`.)
+
+
 xml.parsers.expat
 -----------------
 
