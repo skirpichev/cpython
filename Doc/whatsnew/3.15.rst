@@ -2054,9 +2054,8 @@ New deprecations
 
     (Contributed by Sergey B Kirpichev and Serhiy Storchaka in :gh:`143715`.)
 
-  - Support the :c:expr:`float complex` and :c:expr:`double complex` C types in
-    the :mod:`struct` module (formatting characters ``'F'`` and ``'D'``
-    respectively).
+  - Support for ``'F'`` and ``'D'`` format type codes (the :c:expr:`float
+    complex` and :c:expr:`double complex` C types, respectively)
     (Contributed by Sergey B Kirpichev in :gh:`121249`.)
 
 
