@@ -4,11 +4,10 @@ Pending removal in Python 3.20
 * :mod:`struct`:
 
   - Calling the ``__new__()`` method of :class:`struct.Struct` without the
-  *format* argument is deprecated and will be removed in Python 3.20.  Calling
-  :meth:`~object.__init__` method on initialized :class:`~struct.Struct`
-  objects is deprecated and will be removed in Python 3.20.
-
-  (Contributed by Sergey B Kirpichev and Serhiy Storchaka in :gh:`143715`.)
+    *format* argument is deprecated and will be removed in Python 3.20.  Calling
+    :meth:`~object.__init__` method on initialized :class:`~struct.Struct`
+    objects is deprecated and will be removed in Python 3.20.
+    (Contributed by Sergey B Kirpichev and Serhiy Storchaka in :gh:`143715`.)
 
   - Support for ``'F'`` and ``'D'`` format type codes (the :c:expr:`float
     complex` and :c:expr:`double complex` C types, respectively)
