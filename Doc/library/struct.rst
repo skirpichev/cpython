@@ -264,6 +264,10 @@ platform-dependent.
 +--------+--------------------------+--------------------+----------------+------------+
 | ``D``  | :c:expr:`double complex` | complex            | 16             | \(10)      |
 +--------+--------------------------+--------------------+----------------+------------+
+| ``Zf`` | :c:expr:`float complex`  | complex            | 8              | \(10)      |
++--------+--------------------------+--------------------+----------------+------------+
+| ``Zd`` | :c:expr:`double complex` | complex            | 16             | \(10)      |
++--------+--------------------------+--------------------+----------------+------------+
 | ``s``  | :c:expr:`char[]`         | bytes              |                | \(9)       |
 +--------+--------------------------+--------------------+----------------+------------+
 | ``p``  | :c:expr:`char[]`         | bytes              |                | \(8)       |
@@ -280,8 +284,11 @@ platform-dependent.
 .. versionchanged:: 3.14
    Added support for the ``'F'`` and ``'D'`` formats.
 
-.. deprecated-removed:: 3.15 3.17
-   Support for the ``'F'`` and ``'D'`` formats.
+.. versionchanged:: next
+   Added support for the ``'Zf'`` and ``'Zd'`` formats.
+
+.. deprecated-removed:: 3.15 3.20
+   Support for the ``'F'`` and ``'D'`` format codes.
 
 .. seealso::
 
@@ -375,7 +382,7 @@ Notes:
    For the ``'F'`` and ``'D'`` format characters, the packed representation uses
    the IEEE 754 binary32 and binary64 format for components of the complex
    number, regardless of the floating-point format used by the platform.
-   Note that complex types (``F`` and ``D``) are available unconditionally,
+   Note that complex types (``F``/``Zf`` and ``D``/``Zd``) are available unconditionally,
    despite complex types being an optional feature in C.
    As specified in the C11 standard, each complex type is represented by a
    two-element C array containing, respectively, the real and imaginary parts.
