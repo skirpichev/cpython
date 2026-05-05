@@ -1544,6 +1544,24 @@ _remote_debugging_BinaryWriter_write_sample_impl(BinaryWriterObject *self,
     Py_RETURN_NONE;
 }
 
+/* Finalize the writer, cache total_samples, and destroy it.
+ *
+ * The cache assignment must happen AFTER binary_writer_finalize(): finalize
+ * flushes pending RLE samples via flush_pending_rle(), which increments
+ * writer->total_samples for each one. Caching before finalize would lose
+ * those trailing samples. */
+static int
+binary_writer_finalize_and_cache(BinaryWriterObject *self)
+{
+    if (binary_writer_finalize(self->writer) < 0) {
+        return -1;
+    }
+    self->cached_total_samples = self->writer->total_samples;
+    binary_writer_destroy(self->writer);
+    self->writer = NULL;
+    return 0;
+}
+
 /*[clinic input]
 _remote_debugging.BinaryWriter.finalize
 
@@ -1561,15 +1579,9 @@ _remote_debugging_BinaryWriter_finalize_impl(BinaryWriterObject *self)
         return NULL;
     }
 
-    /* Save total_samples before finalizing */
-    self->cached_total_samples = self->writer->total_samples;
-
-    if (binary_writer_finalize(self->writer) < 0) {
+    if (binary_writer_finalize_and_cache(self) < 0) {
         return NULL;
     }
-
-    binary_writer_destroy(self->writer);
-    self->writer = NULL;
 
     Py_RETURN_NONE;
 }
@@ -1624,14 +1636,18 @@ _remote_debugging_BinaryWriter___exit___impl(BinaryWriterObject *self,
     if (self->writer) {
         /* Only finalize on normal exit (no exception) */
         if (exc_type == Py_None) {
-            if (binary_writer_finalize(self->writer) < 0) {
-                binary_writer_destroy(self->writer);
-                self->writer = NULL;
+            if (binary_writer_finalize_and_cache(self) < 0) {
+                if (self->writer) {
+                    binary_writer_destroy(self->writer);
+                    self->writer = NULL;
+                }
                 return NULL;
             }
         }
-        binary_writer_destroy(self->writer);
-        self->writer = NULL;
+        else {
+            binary_writer_destroy(self->writer);
+            self->writer = NULL;
+        }
     }
     Py_RETURN_FALSE;
 }
@@ -1658,8 +1674,9 @@ _remote_debugging_BinaryWriter_get_stats_impl(BinaryWriterObject *self)
 }
 
 static PyObject *
-BinaryWriter_get_total_samples(BinaryWriterObject *self, void *closure)
+BinaryWriter_get_total_samples(PyObject *op, void *closure)
 {
+    BinaryWriterObject *self = BinaryWriter_CAST(op);
     if (!self->writer) {
         /* Use cached value after finalize/close */
         return PyLong_FromUnsignedLong(self->cached_total_samples);
@@ -1668,7 +1685,7 @@ BinaryWriter_get_total_samples(BinaryWriterObject *self, void *closure)
 }
 
 static PyGetSetDef BinaryWriter_getset[] = {
-    {"total_samples", (getter)BinaryWriter_get_total_samples, NULL, "Total samples written", NULL},
+    {"total_samples", BinaryWriter_get_total_samples, NULL, "Total samples written", NULL},
     {NULL}
 };
 
