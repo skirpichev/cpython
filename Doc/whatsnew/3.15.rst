@@ -91,6 +91,7 @@ Summary -- Release highlights
 * :pep:`803`, :pep:`820 <820>`, :pep:`793 <793>`:
   :ref:`Stable ABI for free-threaded builds <whatsnew315-abi3t>` and
   related C API
+* :pep:`788`: :ref:`Protection against finalization in the C API <whatsnew315-c-api-interpreter-finalization>`
 * :ref:`The JIT compiler has been significantly upgraded <whatsnew315-jit>`
 * :ref:`The official Windows 64-bit binaries now use the tail-calling interpreter
   <whatsnew315-windows-tail-calling-interpreter>`
@@ -522,6 +523,39 @@ If not using a build tool -- or when writing such a tool -- you can select
 in :ref:`abi3-compiling`.
 
 .. seealso:: :pep:`803` for further details.
+
+
+.. _whatsnew315-c-api-interpreter-finalization:
+
+:pep:`788`: Protecting the C API from interpreter finalization
+--------------------------------------------------------------
+
+In the C API, :term:`interpreter finalization <interpreter shutdown>` can be
+problematic for many extensions, because :term:`attaching <attached thread
+state>` a thread state will permanently hang the thread, resulting in deadlocks
+and other spurious issues. Additionally, it has historically been impossible
+to safely check whether an interpreter is alive before using it, leading to crashes
+when a thread concurrently deletes an interpreter while another thread is
+trying to attach to it.
+
+There are now several new suites of APIs to circumvent these problems:
+
+* :ref:`Interpreter guards <interpreter-guards>`, which prevent an interpreter
+  from finalizing.
+* :ref:`Interpreter views <interpreter-views>`, which allow thread-safe access
+  to an interpreter that may be concurrently finalizing or deleted.
+* :ref:`New APIs <c-api-attach-detach>` to automatically attach and detach
+  thread states that come with built-in protection against finalization.
+
+In addition, APIs in the ``PyGILState`` family (most notably
+:c:func:`PyGILState_Ensure` and :c:func:`PyGILState_Release`) have been
+:term:`soft deprecated`. There is **no** plan to remove them, and existing
+code will continue to work, but there will be no new ``PyGILState`` APIs
+in future versions of Python.
+
+.. seealso:: :pep:`788` for further details.
+
+(Contributed by Peter Bierma in :gh:`149101`.)
 
 
 .. _whatsnew315-improved-error-messages:
