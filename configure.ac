@@ -2548,9 +2548,23 @@ AS_VAR_IF([ac_cv_gcc_compat], [yes], [
       AX_CHECK_COMPILE_FLAG([-mno-omit-leaf-frame-pointer], [
         frame_pointer_cflags="$frame_pointer_cflags -mno-omit-leaf-frame-pointer"
       ], [], [-Werror])
+      AS_CASE([$host_cpu], [arm|armv*], [
+        AX_CHECK_COMPILE_FLAG([-marm], [
+          frame_pointer_cflags="$frame_pointer_cflags -marm"
+        ], [], [-Werror])
+      ])
+      AS_CASE([$host_cpu], [s390*], [
+        AX_CHECK_COMPILE_FLAG([-mbackchain], [
+          dnl Do not use no-omit-frame-pointer; see gh-149362
+          frame_pointer_cflags="-mbackchain"
+        ], [], [-Werror])
+      ])
     ], [], [-Werror])
     if test -n "$frame_pointer_cflags" && test "x$with_frame_pointers" != xno; then
       BASECFLAGS="$frame_pointer_cflags $BASECFLAGS"
+      AC_DEFINE([_Py_WITH_FRAME_POINTERS], [1],
+                [Define to 1 if frame unwinding via pointers is expected
+                 to work, 0 if not. Leave undefined if unknown.])
     fi
 
     CFLAGS_NODIST="$CFLAGS_NODIST -std=c11"

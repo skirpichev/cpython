@@ -2552,6 +2552,19 @@ Build changes
   and :option:`-X dev <-X>` is passed to the Python or Python is built in :ref:`debug mode <debug-build>`.
   (Contributed by Donghee Na in :gh:`141770`.)
 
+.. _whatsnew315-frame-pointers:
+
+* CPython is now built with frame pointers enabled by default
+  (:pep:`831`). Pass :option:`--without-frame-pointers` to opt out.
+
+  Authors of C extensions and native libraries built with custom build
+  systems should ensure the unwind chain is intact.
+  This is usually done by adding ``-fno-omit-frame-pointer`` and
+  similar flags to ``CFLAGS``. See :option:`--without-frame-pointers`
+  documentation for the specific flags Python uses.
+
+  (Contributed by Pablo Galindo Salgado and Savannah Ostrowski in :gh:`149201`.)
+
 .. _whatsnew315-windows-tail-calling-interpreter:
 
 * 64-bit builds using Visual Studio 2026 (MSVC 18) may now use the new
