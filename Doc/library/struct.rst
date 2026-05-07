@@ -209,6 +209,7 @@ Notes:
 
 
 .. _type-codes:
+.. _format-characters:
 
 Type Codes
 ^^^^^^^^^^
