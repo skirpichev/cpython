@@ -91,7 +91,7 @@ Notes:
 .. seealso::
 
    The :ref:`ctypes <ctypes-fundamental-data-types>` and
-   :ref:`struct <format-characters>` modules,
+   :ref:`struct <type-codes>` modules,
    as well as third-party modules like `numpy <https://numpy.org/doc/stable/reference/arrays.interface.html#object.__array_interface__>`__,
    use similar -- but slightly different -- type codes.
 
