@@ -2237,11 +2237,6 @@ New deprecations
 
     (Contributed by Sergey B Kirpichev and Serhiy Storchaka in :gh:`143715`.)
 
-  - Support for ``'F'`` and ``'D'`` format type codes (the :c:expr:`float
-    complex` and :c:expr:`double complex` C types, respectively)
-    (Contributed by Sergey B Kirpichev in :gh:`121249`.)
-
-
 * :mod:`typing`:
 
   * The following statements now cause ``DeprecationWarning``\ s to be emitted

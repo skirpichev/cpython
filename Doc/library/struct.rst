@@ -283,9 +283,6 @@ platform-dependent.
 .. versionchanged:: next
    Added support for the ``'Zf'`` and ``'Zd'`` formats.
 
-.. deprecated-removed:: 3.15 3.20
-   Support for the ``'F'`` and ``'D'`` format codes.
-
 .. seealso::
 
    The :mod:`array` and :ref:`ctypes <ctypes-fundamental-data-types>` modules,

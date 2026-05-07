@@ -1,2 +1,0 @@
-Deprecate support for complex types in the :mod:`struct` module (formatting
-characters ``'F'`` and ``'D'`` respectively).
