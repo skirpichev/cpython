@@ -589,7 +589,7 @@ class ComplexTest(ComplexesAreIdenticalMixin, unittest.TestCase):
         with (self.assertWarnsRegex(DeprecationWarning,
                 "argument 'real' must be a real number, not complex"),
               self.assertWarnsRegex(DeprecationWarning,
-                "argument 'imag' must be a real number, not complex")):
+                "argument 'imag' must be a real number, not imaginary")):
             check(complex(4.25+0j, 0j), 4.25, 0.0)
         with (self.assertWarnsRegex(DeprecationWarning,
                 "argument 'real' must be a real number, not imaginary"),
