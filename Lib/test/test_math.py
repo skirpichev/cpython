@@ -1233,7 +1233,7 @@ class MathTests(unittest.TestCase):
         self.assertEqual(math.log(INF), INF)
         self.assertTrue(math.isnan(math.log(NAN)))
 
-        self.assertEqual(math.log(IndexableFloatLike(math.e, 10**1000)), 1.0)
+        self.assertEqual(math.log(IndexableFloatLike(float(math.e), 10**1000)), 1.0)
         self.assertAlmostEqual(math.log(IndexableFloatLike(OverflowError(), 10**1000)),
                                2302.5850929940457)
 

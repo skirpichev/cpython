@@ -6282,6 +6282,10 @@ class TestSignatureDefinitions(unittest.TestCase):
         import marshal
         self._test_module_has_signatures(marshal)
 
+    def test_math_module_has_signatures(self):
+        import math
+        self._test_module_has_signatures(math)
+
     def test_operator_module_has_signatures(self):
         import operator
         self._test_module_has_signatures(operator)

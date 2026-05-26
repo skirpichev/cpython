@@ -11,6 +11,7 @@ list, set, and tuple.
 * UserDict     wrapper around dictionary objects for easier dict subclassing
 * UserList     wrapper around list objects for easier list subclassing
 * UserString   wrapper around string objects for easier string subclassing
+* NamedConst   mixin class for named constants
 
 '''
 
@@ -24,6 +25,7 @@ __all__ = [
     'defaultdict',
     'deque',
     'namedtuple',
+    'NamedConst',
 ]
 
 import _collections_abc
@@ -1662,3 +1664,18 @@ class UserString(_collections_abc.Sequence):
 
     def zfill(self, width):
         return self.__class__(self.data.zfill(width))
+
+
+class NamedConst:
+    def __new__(cls, name, value, docstring):
+        obj = super().__new__(cls, value)
+        obj.name = name
+        obj.__doc__ = docstring
+        return obj
+
+    def __repr__(self):
+        return self.name
+
+
+class _NamedFloat(NamedConst, float):
+    pass

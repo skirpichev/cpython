@@ -1638,22 +1638,32 @@ loghelper(PyObject* arg, double (*func)(double))
 }
 
 
-/* AC: cannot convert yet, see gh-102839 and gh-89381, waiting
-   for support of multiple signatures */
+/*[clinic input]
+@permit_long_docstring_body
+math.log
+
+    x: object
+    base: object(c_default="NULL") = math.e
+    /
+
+Return the logarithm of x to the given base.
+
+If the base is not specified, returns the natural logarithm (base e) of x.
+[clinic start generated code]*/
+
 static PyObject *
-math_log(PyObject *module, PyObject * const *args, Py_ssize_t nargs)
+math_log_impl(PyObject *module, PyObject *x, PyObject *base)
+/*[clinic end generated code: output=1dead263cbb1e854 input=123cf4059aa0d292]*/
 {
     PyObject *num, *den;
     PyObject *ans;
 
-    if (!_PyArg_CheckPositional("log", nargs, 1, 2))
-        return NULL;
-
-    num = loghelper(args[0], m_log);
-    if (num == NULL || nargs == 1)
+    num = loghelper(x, m_log);
+    if (num == NULL || base == NULL) {
         return num;
+    }
 
-    den = loghelper(args[1], m_log);
+    den = loghelper(base, m_log);
     if (den == NULL) {
         Py_DECREF(num);
         return NULL;
@@ -1664,11 +1674,6 @@ math_log(PyObject *module, PyObject * const *args, Py_ssize_t nargs)
     Py_DECREF(den);
     return ans;
 }
-
-PyDoc_STRVAR(math_log_doc,
-"log(x, [base=math.e])\n\
-Return the logarithm of x to the given base.\n\n\
-If the base is not specified, returns the natural logarithm (base e) of x.");
 
 /*[clinic input]
 math.log2
@@ -3001,7 +3006,19 @@ math_exec(PyObject *module)
     if (PyModule_Add(module, "pi", PyFloat_FromDouble(Py_MATH_PI)) < 0) {
         return -1;
     }
-    if (PyModule_Add(module, "e", PyFloat_FromDouble(Py_MATH_E)) < 0) {
+
+    PyObject *mod = PyImport_ImportModule("collections");
+    if (mod == NULL) {
+        return -1;
+    }
+    PyObject *e = PyObject_CallMethod(mod, "_NamedFloat",
+                                      "sds", "math.e", Py_MATH_E,
+                                      "Euler number (natural logarithm base).");
+    if (e == NULL) {
+        return -1;
+    }
+    Py_DECREF(mod);
+    if (PyModule_Add(module, "e", e) < 0) {
         return -1;
     }
     // 2pi
@@ -3081,7 +3098,7 @@ static PyMethodDef math_methods[] = {
     MATH_ISNAN_METHODDEF
     MATH_LDEXP_METHODDEF
     {"lgamma",          math_lgamma,    METH_O,         math_lgamma_doc},
-    {"log",             _PyCFunction_CAST(math_log),       METH_FASTCALL,  math_log_doc},
+    MATH_LOG_METHODDEF
     {"log1p",           math_log1p,     METH_O,         math_log1p_doc},
     MATH_LOG10_METHODDEF
     MATH_LOG2_METHODDEF
