@@ -1,0 +1,4 @@
+Preserve original source code for formatting default values of
+:class:`inspect.Parameter`'s.  For instance, if the integer value was specified
+in the octal representation, like ``0o666``, this will be preferred in the repr
+over ``438``.  Patch by Sergey B Kirpichev.

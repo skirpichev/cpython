@@ -156,6 +156,7 @@ import os
 lazy import re
 import sys
 lazy import tokenize
+lazy import textwrap
 import token
 import types
 import functools
@@ -2319,6 +2320,11 @@ def _signature_from_builtin(cls, func, skip_bound_arg=True):
     return _signature_fromstr(cls, func, s, skip_bound_arg)
 
 
+def _get_source_substring(source, lineno, col_offset, end_col_offset):
+    col_range = slice(col_offset, end_col_offset)
+    return source[lineno-1][col_range]
+
+
 def _signature_from_function(cls, func, skip_bound_arg=True,
                              globals=None, locals=None, eval_str=False,
                              *, annotation_format=Format.VALUE):
@@ -2372,12 +2378,29 @@ def _signature_from_function(cls, func, skip_bound_arg=True,
             posonly_left -= 1
 
     # ... w/ defaults.
+    try:
+        source = textwrap.dedent(getsource(func))
+        tree = ast.parse(source).body[0]
+        source = source.splitlines()
+        args = getattr(tree, 'args', None)
+    except (OSError, TypeError):
+        args = None
+    except IndentationError:
+        args = None
+    args_defaults = getattr(args, 'defaults', None)
     for offset, name in enumerate(positional[non_default_count:]):
         kind = _POSITIONAL_ONLY if posonly_left else _POSITIONAL_OR_KEYWORD
         annotation = annotations.get(name, _empty)
-        parameters.append(Parameter(name, annotation=annotation,
-                                    kind=kind,
-                                    default=defaults[offset]))
+        param = Parameter(name, annotation=annotation,
+                          kind=kind,
+                          default=defaults[offset])
+        if args_defaults:
+            default = args_defaults[offset]
+            param._default_repr = _get_source_substring(source, default.lineno,
+                                                        default.col_offset,
+                                                        default.end_col_offset)
+        parameters.append(param)
+
         if posonly_left:
             posonly_left -= 1
 
@@ -2389,15 +2412,26 @@ def _signature_from_function(cls, func, skip_bound_arg=True,
                                     kind=_VAR_POSITIONAL))
 
     # Keyword-only parameters.
-    for name in keyword_only:
+    kwargs_defaults = getattr(args, 'kw_defaults', None)
+    for offset, name in enumerate(keyword_only):
         default = _empty
+        default_repr = _empty
         if kwdefaults is not None:
             default = kwdefaults.get(name, _empty)
+            if kwargs_defaults:
+                default_value = kwargs_defaults[offset]
+                if default_value is not None:
+                    default_repr = _get_source_substring(source,
+                                                         default_value.lineno,
+                                                         default_value.col_offset,
+                                                         default_value.end_col_offset)
 
         annotation = annotations.get(name, _empty)
-        parameters.append(Parameter(name, annotation=annotation,
-                                    kind=_KEYWORD_ONLY,
-                                    default=default))
+        param = Parameter(name, annotation=annotation,
+                          kind=_KEYWORD_ONLY,
+                          default=default)
+        param._default_repr = default_repr
+        parameters.append(param)
     # **kwargs
     if func_code.co_flags & CO_VARKEYWORDS:
         index = pos_count + keyword_only_count
@@ -2683,7 +2717,8 @@ class Parameter:
         Every value has a `description` attribute describing meaning.
     """
 
-    __slots__ = ('_name', '_kind', '_default', '_annotation')
+    __slots__ = ('_name', '_kind', '_default', '_annotation',
+                 '_default_repr')
 
     POSITIONAL_ONLY         = _POSITIONAL_ONLY
     POSITIONAL_OR_KEYWORD   = _POSITIONAL_OR_KEYWORD
@@ -2705,6 +2740,7 @@ class Parameter:
                 raise ValueError(msg)
         self._default = default
         self._annotation = annotation
+        self._default_repr = _empty
 
         if name is _empty:
             raise ValueError('name is a required attribute for Parameter')
@@ -2793,11 +2829,17 @@ class Parameter:
                                           quote_annotation_strings=quote_annotation_strings)
             formatted = '{}: {}'.format(formatted, annotation)
 
-        if self._default is not _empty:
+        if self._default_repr is not _empty:
             if self._annotation is not _empty:
-                formatted = '{} = {}'.format(formatted, repr(self._default))
+                formatted = '{} = {}'.format(formatted, self._default_repr)
             else:
-                formatted = '{}={}'.format(formatted, repr(self._default))
+                formatted = '{}={}'.format(formatted, self._default_repr)
+        else:
+            if self._default is not _empty:
+                if self._annotation is not _empty:
+                    formatted = '{} = {}'.format(formatted, repr(self._default))
+                else:
+                    formatted = '{}={}'.format(formatted, repr(self._default))
 
         if kind == _VAR_POSITIONAL:
             formatted = '*' + formatted

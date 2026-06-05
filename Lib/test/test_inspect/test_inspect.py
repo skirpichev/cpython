@@ -5648,6 +5648,19 @@ class TestParameterObject(unittest.TestCase):
         with self.assertRaises(AttributeError):
             p.kind = 123
 
+    def test_signature_parameter_default_repr(self):
+        import dbm
+        from sys import maxsize
+
+        sig = inspect.signature(dbm.open)
+        self.assertEqual(repr(sig), "<Signature (file, flag='r', mode=0o666)>")
+
+        def index(value, start=0, stop=maxsize, /):
+            pass
+
+        sig = inspect.signature(index)
+        self.assertEqual(repr(sig), "<Signature (value, start=0, stop=maxsize, /)>")
+
 
 class TestSignatureBind(unittest.TestCase):
     @staticmethod
