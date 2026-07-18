@@ -2201,13 +2201,11 @@ PyDecType_New(decimal_state *state, PyTypeObject *type)
         dec = _Py_FREELIST_POP(PyDecObject, decimals);
         if (dec == NULL) {
             dec = PyObject_GC_New(PyDecObject, state->PyDec_Type);
+            PyObject_GC_Track(dec);
         }
     }
     else {
         dec = (PyDecObject *)type->tp_alloc(type, 0);
-        if (type == state->PyDec_Type) {
-            PyObject_GC_Track(dec);
-        }
     }
     if (dec == NULL) {
         return NULL;
