@@ -2205,6 +2205,9 @@ PyDecType_New(decimal_state *state, PyTypeObject *type)
     }
     else {
         dec = (PyDecObject *)type->tp_alloc(type, 0);
+        if (type == state->PyDec_Type) {
+            PyObject_GC_Track(dec);
+        }
     }
     if (dec == NULL) {
         return NULL;
@@ -2219,9 +2222,6 @@ PyDecType_New(decimal_state *state, PyTypeObject *type)
     MPD(dec)->alloc = _Py_DEC_MINALLOC;
     MPD(dec)->data = dec->data;
 
-    if (type == state->PyDec_Type) {
-        PyObject_GC_Track(dec);
-    }
     assert(PyObject_GC_IsTracked((PyObject *)dec));
     return (PyObject *)dec;
 }
@@ -2233,11 +2233,11 @@ dec_dealloc(PyObject *dec)
     PyTypeObject *tp = Py_TYPE(dec);
     decimal_state *state = get_module_state_by_def(tp);
 
-    PyObject_GC_UnTrack(dec);
     mpd_del(MPD(dec));
     if (!PyDec_CheckExact(state, dec)
         || !_Py_FREELIST_PUSH(decimals, dec, Py_decimals_MAXFREELIST))
     {
+        PyObject_GC_UnTrack(dec);
         tp->tp_free(dec);
         Py_DECREF(tp);
     }
