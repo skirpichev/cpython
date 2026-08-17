@@ -168,7 +168,7 @@ Node classes
    arguments that were set as attributes of the AST node, even if they did not
    match any of the fields of the AST node. These cases now raise a :exc:`TypeError`.
 
-.. deprecated-removed:: next 3.20
+.. deprecated-removed:: 3.15 3.20
 
     In the :ref:`grammar above <abstract-grammar>`, the AST node classes that
     correspond to production rules with variants (aka "sums") are abstract
@@ -807,6 +807,10 @@ Comprehensions
    comprehensions. ``elt`` (or ``key`` and ``value``) is a single node
    representing the part that will be evaluated for each item.
 
+   For dictionary comprehensions using unpacking, for example
+   ``{**item for item in items}``, the expression to be expanded goes in
+   ``key`` and ``value`` is ``None``.
+
    ``generators`` is a list of :class:`comprehension` nodes.
 
    .. doctest::
@@ -1366,7 +1370,7 @@ Control flow
 
    ``try`` blocks which are followed by ``except*`` clauses. The attributes are the
    same as for :class:`Try` but the :class:`ExceptHandler` nodes in ``handlers``
-   are interpreted as ``except*`` blocks rather then ``except``.
+   are interpreted as ``except*`` blocks rather than ``except``.
 
    .. doctest::
 
@@ -2548,7 +2552,7 @@ and classes for traversing abstract syntax trees:
    .. versionchanged:: 3.15
       Omit optional ``Load()`` values by default.
 
-   .. versionchanged:: next
+   .. versionchanged:: 3.15
       Added the *color* parameter.
 
 
@@ -2608,7 +2612,7 @@ Command-line usage
 
 .. versionadded:: 3.9
 
-.. versionchanged:: next
+.. versionchanged:: 3.15
    The output is now syntax highlighted by default. This can be
    :ref:`controlled using environment variables <using-on-controlling-color>`.
 
