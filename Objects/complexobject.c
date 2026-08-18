@@ -1581,17 +1581,22 @@ PyImaginary_FromDouble(double imag)
 #define CIMAG(op) ((PyComplexObject *)(op))->cval.imag
 
 static PyObject *
-imaginary_neg(PyComplexObject *v)
+imaginary_neg(PyObject *op)
 {
+    PyComplexObject *v = _PyComplexObject_CAST(op);
+
     return PyImaginary_FromDouble(-v->cval.imag);
 }
 
 static PyObject *
-imaginary_pos(PyComplexObject *v)
+imaginary_pos(PyObject *op)
 {
-    if (PyImaginary_CheckExact(v)) {
-        return Py_NewRef(v);
+    if (PyImaginary_CheckExact(op)) {
+        return Py_NewRef(op);
     }
+
+    PyComplexObject *v = _PyComplexObject_CAST(op);
+
     return PyImaginary_FromDouble(v->cval.imag);
 }
 
