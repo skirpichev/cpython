@@ -1705,6 +1705,7 @@ imaginary_div(PyObject *v, PyObject *w)
 }
 
 /*[clinic input]
+@permit_long_summary
 imaginary.conjugate
 
 Return the complex conjugate of its argument. (-4j).conjugate() == 4j.
@@ -1712,7 +1713,7 @@ Return the complex conjugate of its argument. (-4j).conjugate() == 4j.
 
 static PyObject *
 imaginary_conjugate_impl(PyComplexObject *self)
-/*[clinic end generated code: output=247bb3742efd769d input=8dcd1c93a873c492]*/
+/*[clinic end generated code: output=247bb3742efd769d input=5efd5f0c233188ef]*/
 {
     Py_complex c = self->cval;
 
