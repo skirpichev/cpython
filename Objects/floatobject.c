@@ -1391,9 +1391,8 @@ _Py_dg_strtod_hex(const char *s00, char **se)
         if (!('0' <= *s && *s <= '9'))
             goto parse_error;
         s++;
-        while ('0' <= *s && *s <= '9')
-            s++;
-        exp = strtol(exp_start, NULL, 10);
+        exp = strtol(exp_start, se, 10);
+        s = exp_start + (*se - exp_start);
     }
     else
         exp = 0;
@@ -1479,8 +1478,6 @@ _Py_dg_strtod_hex(const char *s00, char **se)
     x = ldexp(x, (int)(exp+4*key_digit));
 
   finished:
-    if (*s && !Py_ISSPACE(*s))
-        goto parse_error;
     *se = (char *)s;
     errno = 0;
     return negate ? -x : x;
