@@ -1017,7 +1017,7 @@ class ReferenceTestCase(unittest.TestCase):
             (2**100, 'l'),
             (1.5, 'g'),
             (1+1.5j, 'y'),
-            (1.5j, 'j')
+            (1.5j, 'j'),
             (b'', 's'),
             (b'bytes', 's'),
             ('', 'Z'),
