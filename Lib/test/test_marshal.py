@@ -630,7 +630,7 @@ class BugsTestCase(unittest.TestCase):
             def consts(code):
                 return [sorted(map(repr, x)) if isinstance(x, frozenset) else x
                         for x in code.co_consts]
-            assert ['(nan+nanj)', '(nan+nanj)', '1.5'] in consts(code)
+            assert ['1.5', 'nanj', 'nanj'] in consts(code)
             for version in range(marshal.version + 1):
                 new = marshal.loads(marshal.dumps(code, version))
                 assert new.co_code == code.co_code
@@ -1017,7 +1017,7 @@ class ReferenceTestCase(unittest.TestCase):
             (2**100, 'l'),
             (1.5, 'g'),
             (1+1.5j, 'y'),
-            (1.5j, 'j'),
+            (1.5j, 'J'),
             (b'', 's'),
             (b'bytes', 's'),
             ('', 'Z'),
