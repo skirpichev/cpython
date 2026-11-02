@@ -1609,22 +1609,22 @@ class StrTest(string_tests.StringLikeTest,
             '%x' % pi
         with self.assertRaisesRegex(TypeError,
                 'format argument: %x requires an integer, not complex'):
-            '%x' % 3j
+            '%x' % (1+3j)
         with self.assertRaisesRegex(TypeError,
                 'format argument: %X requires an integer, not complex'):
-            '%X' % 2j
+            '%X' % (1+2j)
         with self.assertRaisesRegex(TypeError,
                 'format argument: %o requires an integer, not complex'):
-            '%o' % 1j
+            '%o' % (1+1j)
         with self.assertRaisesRegex(TypeError,
                 'format argument: %u requires a real number, not complex'):
-            '%u' % 3j
+            '%u' % (1+3j)
         with self.assertRaisesRegex(TypeError,
                 'format argument: %i requires a real number, not complex'):
-            '%i' % 2j
+            '%i' % (1+2j)
         with self.assertRaisesRegex(TypeError,
                 'format argument: %d requires a real number, not complex'):
-            '%d' % 1j
+            '%d' % (1+1j)
         with self.assertRaisesRegex(TypeError,
                 r'format argument: %c requires an integer or a unicode character, '
                 r'not .*\.PseudoFloat'):

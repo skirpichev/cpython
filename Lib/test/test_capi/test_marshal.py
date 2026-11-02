@@ -27,6 +27,7 @@ TEST_OBJECTS = (
     123,
     45.6,
     7+8j,
+    123j,
     'long line '*1000,
     # Check that serializing code object is allowed (allow_code = 1)
     noop_func.__code__,

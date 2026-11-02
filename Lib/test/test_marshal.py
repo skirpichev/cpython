@@ -487,7 +487,8 @@ class BugsTestCase(unittest.TestCase):
         #   >>> class Int(int): pass
         #   >>> type(loads(dumps(Int())))
         #   <type 'int'>
-        for typ in (int, float, complex, tuple, list, dict, set, frozenset):
+        for typ in (int, float, complex, tuple, list, dict, set, frozenset,
+                    imaginary):
             # Note: str subclasses are not tested because they get handled
             # by marshal's routines for objects supporting the buffer API.
             subtyp = type('subtyp', (typ,), {})
@@ -543,7 +544,7 @@ class BugsTestCase(unittest.TestCase):
                 if n is not None and n > 4:
                     n += 10**6
                 return n
-        for value in (1.0, 1j, b'0123456789', '0123456789'):
+        for value in (1.0, 1j, 1+1j, b'0123456789', '0123456789'):
             self.assertRaises(ValueError, marshal.load,
                               BadReader(marshal.dumps(value)))
 
@@ -628,7 +629,7 @@ class BugsTestCase(unittest.TestCase):
             def consts(code):
                 return [sorted(map(repr, x)) if isinstance(x, frozenset) else x
                         for x in code.co_consts]
-            assert ['(nan+nanj)', '(nan+nanj)', '1.5'] in consts(code)
+            assert ['1.5', 'nanj', 'nanj'] in consts(code)
             for version in range(marshal.version + 1):
                 new = marshal.loads(marshal.dumps(code, version))
                 assert new.co_code == code.co_code
@@ -1013,7 +1014,8 @@ class ReferenceTestCase(unittest.TestCase):
             (1, 'i'),
             (2**100, 'l'),
             (1.5, 'g'),
-            (1.5j, 'y'),
+            (1+1.5j, 'y'),
+            (1.5j, 'J'),
             (b'', 's'),
             (b'bytes', 's'),
             ('', 'Z'),

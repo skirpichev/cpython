@@ -34,9 +34,10 @@ are always available.  They are listed here in alphabetical order.
 | |                       | |                     | |  :func:`pow`        | |  **V**                |
 | |  **D**                | |  **I**              | |  :func:`print`      | |  :func:`vars`         |
 | |  :func:`delattr`      | |  :func:`id`         | |  :func:`property`   | |                       |
-| |  |func-dict|_         | |  :func:`input`      | |                     | |  **Z**                |
-| |  :func:`dir`          | |  :func:`int`        | |                     | |  :func:`zip`          |
-| |  :func:`divmod`       | |  :func:`isinstance` | |                     | |                       |
+| |  |func-dict|_         | |  :func:`imaginary`  | |                     | |                       |
+| |  :func:`dir`          | |  :func:`input`      | |                     | |  **Z**                |
+| |  :func:`divmod`       | |  :func:`int`        | |                     | |  :func:`zip`          |
+| |                       | |  :func:`isinstance` | |                     | |                       |
 | |                       | |  :func:`issubclass` | |                     | |  **_**                |
 | |                       | |  :func:`iter`       | |                     | |  :func:`__import__`   |
 +-------------------------+-----------------------+-----------------------+-------------------------+
@@ -456,7 +457,7 @@ are always available.  They are listed here in alphabetical order.
       >>> complex('+1.23')
       (1.23+0j)
       >>> complex('-4.5j')
-      -4.5j
+      (0.0-4.5j)
       >>> complex('-1.23+4.5j')
       (-1.23+4.5j)
       >>> complex('\t( -1.23+4.5J )\n')
@@ -466,7 +467,7 @@ are always available.  They are listed here in alphabetical order.
       >>> complex(1.23)
       (1.23+0j)
       >>> complex(imag=-4.5)
-      -4.5j
+      (0.0-4.5j)
       >>> complex(-1.23, 4.5)
       (-1.23+4.5j)
 
@@ -510,7 +511,7 @@ are always available.  They are listed here in alphabetical order.
 
    See also :meth:`complex.from_number` which only accepts a single numeric argument.
 
-   If all arguments are omitted, returns ``0j``.
+   If all arguments are omitted, returns ``0.0+0j``.
 
    The complex type is described in :ref:`typesnumeric`.
 
@@ -1065,6 +1066,15 @@ are always available.  They are listed here in alphabetical order.
    .. impl-detail:: This is the address of the object in memory.
 
    .. audit-event:: builtins.id id id
+
+
+.. class:: imaginary(x=0.0)
+
+   Create an imaginary number from a number.
+
+   This is equivalent of ``float(x)*1j`` for numeric input.
+
+   .. versionadded:: next
 
 
 .. function:: input()

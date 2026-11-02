@@ -285,7 +285,7 @@ Literals
 
    A constant value. The ``value`` attribute of the ``Constant`` literal contains the
    Python object it represents. The values represented can be instances of :class:`str`,
-   :class:`bytes`, :class:`int`, :class:`float`, :class:`complex`, and :class:`bool`,
+   :class:`bytes`, :class:`int`, :class:`float`, :class:`imaginary`, and :class:`bool`,
    and the constants :data:`None` and :data:`Ellipsis`.
 
    The ``kind`` attribute is an optional string. For string literals with a
