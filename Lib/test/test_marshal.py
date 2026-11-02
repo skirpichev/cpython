@@ -1343,8 +1343,8 @@ class ReferenceTestCase(unittest.TestCase):
             'tuple': [('tuple', 'nan')],
             'repeat': [('tuple', 'nan'), ('tuple', 'nan')],
             'set': [('frozenset', 'nan'), ('frozenset', 'nan')],
-            'complex': [('frozenset', '(nan+nanj)'),
-                        ('frozenset', '(nan+nanj)')],
+            'complex': [('frozenset', 'nanj'),
+                        ('frozenset', 'nanj')],
             'tuples': [('tuple', 'nan')] * 4,
             'nested': [('frozenset', 'nan')],
         }
