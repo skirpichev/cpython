@@ -1,5 +1,6 @@
 #include "Python.h"
 #include "pycore_token.h"
+#include "errcode.h"
 
 #include "lexer_internal.h"
 #include "../tokenizer/helpers.h"
@@ -88,21 +89,23 @@ verify_end_of_number(struct tok_state *tok, int c, const char *kind) {
 }
 
 static int
-tok_decimal_tail(struct tok_state *tok)
+tok_digits_tail(struct tok_state *tok, int base)
 {
     int c;
+    int (*_isdigit)(char) = base == 16 ? &Py_ISXDIGIT : &Py_ISDIGIT;
 
     while (1) {
         do {
             c = tok_nextc(tok);
-        } while (Py_ISDIGIT(c));
+        } while ((*_isdigit)(c));
         if (c != '_') {
             break;
         }
         c = tok_nextc(tok);
-        if (!Py_ISDIGIT(c)) {
+        if (!(*_isdigit)(c)) {
             tok_backup(tok, c);
-            _PyTokenizer_syntaxerror(tok, "invalid decimal literal");
+            _PyTokenizer_syntaxerror(tok, "invalid %s literal",
+                                     base == 16 ? "hexadecimal" : "decimal");
             return 0;
         }
     }
@@ -123,20 +126,66 @@ _PyLexer_scan_number(struct tok_state *tok, struct token *token, int c,
         /* Hex, octal or binary -- maybe. */
         c = tok_nextc(tok);
         if (c == 'x' || c == 'X') {
-            /* Hex */
+            /* Hex integer/float */
             c = tok_nextc(tok);
-            do {
-                if (c == '_') {
-                    c = tok_nextc(tok);
-                }
+            if (c == '_') {
+                c = tok_nextc(tok);
+            }
+            if (c == '.') {
+                c = tok_nextc(tok);
                 if (!Py_ISXDIGIT(c)) {
                     tok_backup(tok, c);
-                    return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid hexadecimal literal"));
+                    return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid float literal"));
                 }
-                do {
-                    c = tok_nextc(tok);
-                } while (Py_ISXDIGIT(c));
-            } while (c == '_');
+                goto hexfraction;
+            }
+            else if (!Py_ISXDIGIT(c)) {
+                tok_backup(tok, c);
+                return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid hexadecimal literal"));
+            }
+            c = tok_digits_tail(tok, 16);
+            if (c == 0) {
+                return MAKE_TOKEN(ERRORTOKEN);
+            }
+            if (c == '.') {
+                c = tok_nextc(tok);
+    hexfraction:
+                /* Allow attribute access on hexadecimal integer literals for
+                 * for existing public attributes on int's, e.g. 0x1.bit_length(). */
+                if ((c == 'a' && lookahead(tok, "s_integer_ratio")) ||
+                    (c == 't' && lookahead(tok, "o_bytes")) ||
+                    (c == 'b' && (lookahead(tok, "it_count") ||
+                                  lookahead(tok, "it_length"))) ||
+                    (c == 'c' && lookahead(tok, "onjugate")) ||
+                    (c == 'd' && lookahead(tok, "enominator")) ||
+                    (c == 'f' && lookahead(tok, "rom_bytes")) ||
+                    (c == 'i' && (lookahead(tok, "mag") ||
+                                  lookahead(tok, "s_integer"))) ||
+                    (c == 'n' && lookahead(tok, "umerator")) ||
+                    (c == 'r' && lookahead(tok, "eal")))
+                {
+                    if (_PyTokenizer_parser_warn(tok, PyExc_SyntaxWarning,
+                                                 "invalid float literal"))
+                    {
+                        return 0;
+                    }
+                    tok_backup(tok, c);
+                    c = '.';
+                    goto hexint;
+                }
+                if (Py_ISXDIGIT(c)) {
+                    c = tok_digits_tail(tok, 16);
+                    if (c == 0) {
+                        tok->done = E_OK;
+                        _PyTokenizer_syntaxerror(tok, "invalid float literal");
+                        return MAKE_TOKEN(ERRORTOKEN);
+                    }
+                }
+            }
+            if (c == 'p' || c == 'P') {
+                goto exponent;
+            }
+     hexint:
             if (!verify_end_of_number(tok, c, "hexadecimal")) {
                 return MAKE_TOKEN(ERRORTOKEN);
             }
@@ -217,7 +266,7 @@ _PyLexer_scan_number(struct tok_state *tok, struct token *token, int c,
             _PyTok_Off zeros_end = tok->cur;
             if (Py_ISDIGIT(c)) {
                 nonzero = 1;
-                c = tok_decimal_tail(tok);
+                c = tok_digits_tail(tok, 10);
                 if (c == 0) {
                     return MAKE_TOKEN(ERRORTOKEN);
                 }
@@ -249,7 +298,7 @@ _PyLexer_scan_number(struct tok_state *tok, struct token *token, int c,
     }
     else {
         /* Decimal */
-        c = tok_decimal_tail(tok);
+        c = tok_digits_tail(tok, 10);
         if (c == 0) {
             return MAKE_TOKEN(ERRORTOKEN);
         }
@@ -260,7 +309,7 @@ _PyLexer_scan_number(struct tok_state *tok, struct token *token, int c,
     fraction:
                 /* Fraction */
                 if (Py_ISDIGIT(c)) {
-                    c = tok_decimal_tail(tok);
+                    c = tok_digits_tail(tok, 10);
                     if (c == 0) {
                         return MAKE_TOKEN(ERRORTOKEN);
                     }
@@ -276,11 +325,11 @@ _PyLexer_scan_number(struct tok_state *tok, struct token *token, int c,
                     c = tok_nextc(tok);
                     if (!Py_ISDIGIT(c)) {
                         tok_backup(tok, c);
-                        return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid decimal literal"));
+                        return MAKE_TOKEN(_PyTokenizer_syntaxerror(tok, "invalid float literal"));
                     }
                 } else if (!Py_ISDIGIT(c)) {
                     tok_backup(tok, c);
-                    if (!verify_end_of_number(tok, e, "decimal")) {
+                    if (!verify_end_of_number(tok, e, "float")) {
                         return MAKE_TOKEN(ERRORTOKEN);
                     }
                     tok_backup(tok, e);
@@ -288,7 +337,7 @@ _PyLexer_scan_number(struct tok_state *tok, struct token *token, int c,
                     p_end = tok->cur;
                     return MAKE_TOKEN(NUMBER);
                 }
-                c = tok_decimal_tail(tok);
+                c = tok_digits_tail(tok, 10);
                 if (c == 0) {
                     return MAKE_TOKEN(ERRORTOKEN);
                 }
