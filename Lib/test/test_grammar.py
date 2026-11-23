@@ -86,7 +86,7 @@ class TokenTests(unittest.TestCase):
             self.assertEqual(v, eval('(0x1).' + m))
         self.check_syntax_error('0x1.spam', "invalid hexadecimal literal",
                                 lineno=1, offset=4)
-        self.check_syntax_error('0x1.foo', "invalid hexadecimal literal",
+        self.check_syntax_error('0x1.foo', "invalid float literal",
                                 lineno=1, offset=5)
 
     def test_long_integers(self):
@@ -126,9 +126,6 @@ class TokenTests(unittest.TestCase):
         x = 0X1p1
         x = 0x1.1_1p1
         x = 0x1.1p1_1
-        x = 0x1.
-        x = 0x1.1
-        x = 0x.1
 
     def test_float_exponent_tokenization(self):
         # See issue 21642.

@@ -1465,9 +1465,9 @@ lexical definitions:
       | `hexfloat`
    digitpart: `digit` (["_"] `digit`)*
    exponent:  ("e" | "E") ["+" | "-"] `digitpart`
-   hexfloat: ("0x | "0X") ["_"] (`hexdigitpart` | `hexpointfloat`) [`binexponent`]
-   hexpointfloat: [`hexdigit`] `hexfraction` | `hexdigitpart` "."
-   hexfraction: "." `hexdigitpart`
+   hexfloat: `hexfraction` `binexponent`
+   hexfraction: ("0x | "0X") ["_"] (`hexdigitpart` | `hexpointfloat`)
+   hexpointfloat: ([`hexdigit`] "." `hexdigitpart`) | `hexdigitpart` "."
    hexdigitpart: `hexdigit` (["_"] `hexdigit`)*
    binexponent: ("p" | "P") ["+" | "-"] `digitpart`
 

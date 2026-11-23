@@ -180,6 +180,17 @@ _PyLexer_scan_number(struct tok_state *tok, struct token *token, int c,
                         _PyTokenizer_syntaxerror(tok, "invalid float literal");
                         return MAKE_TOKEN(ERRORTOKEN);
                     }
+                    if (c == 'p' || c == 'P') {
+                        goto exponent;
+                    }
+                    tok_backup(tok, c);
+                    _PyTokenizer_syntaxerror(tok, "invalid float literal");
+                    return MAKE_TOKEN(ERRORTOKEN);
+                }
+                if (c != 'p' && c != 'P') {
+                    tok_backup(tok, c);
+                    _PyTokenizer_syntaxerror(tok, "invalid hexadecimal literal");
+                    return MAKE_TOKEN(ERRORTOKEN);
                 }
             }
             if (c == 'p' || c == 'P') {
